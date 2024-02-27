@@ -7,4 +7,13 @@ layout:
 - go.kubebuilder.io/v4
 projectName: spacelift-operator
 repo: github.com/spacelift-io/spacelift-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: app.spacelift.io
+  kind: Run
+  path: github.com/spacelift-io/spacelift-operator/api/v1beta1
+  version: v1beta1
 version: "3"
