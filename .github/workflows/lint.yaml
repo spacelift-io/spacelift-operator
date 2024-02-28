@@ -1,0 +1,59 @@
+name: Lint
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+jobs:
+  generate:
+    name: generated files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup go
+        uses: ./.github/actions/setup-go/
+      - name: Make sure generated files are up to date
+        run: |
+          make generate
+          git diff --no-patch --exit-code
+          if [ $? -ne 0 ]; then
+            echo "Please run make generate and commit the changes."
+            exit 1
+          fi
+  lint-manifest:
+    name: Manifests
+    runs-on: ubuntu-latest-4-cores
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup go
+        uses: ./.github/actions/setup-go/
+      - name: Make sure manifest are up to date
+        run: |
+          make manifests
+          git diff --no-patch --exit-code
+          if [ $? -ne 0 ]; then
+            echo "Please run make manifests and commit the changes."
+            exit 1
+          fi
+  lint-go:
+    name: GO code
+    runs-on: ubuntu-latest-4-cores
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup go
+        uses: ./.github/actions/setup-go/
+      - name: Make sure go.mod and go.sum are up to date
+        run: |
+          go mod tidy
+          git diff --no-patch --exit-code go.mod go.sum
+          if [ $? -ne 0 ]; then
+            echo "Please run go mod tidy and commit the changes."
+            exit 1
+          fi
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54.2
+          args: --verbose
