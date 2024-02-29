@@ -9,4 +9,4 @@ metadata:
     app.kubernetes.io/created-by: spacelift-operator
   name: run-sample
 spec:
-  # TODO(user): Add fields here
+  stackName: stack-sample
