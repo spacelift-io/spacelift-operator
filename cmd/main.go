@@ -20,21 +20,25 @@ import (
 	"flag"
 	"os"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
+	"github.com/fatih/color"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	kubezap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that exec-entrypoint and run can make use of them.
 	appspaceliftiov1beta1 "github.com/spacelift-io/spacelift-operator/api/v1beta1"
+	"github.com/spacelift-io/spacelift-operator/internal/build"
 	"github.com/spacelift-io/spacelift-operator/internal/controller"
-	//+kubebuilder:scaffold:imports
+	"github.com/spacelift-io/spacelift-operator/internal/logging"
+	"github.com/spacelift-io/spacelift-operator/internal/logging/encoders"
 )
 
 var (
@@ -58,13 +62,24 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	opts := zap.Options{
-		Development: true,
+	opts := kubezap.Options{
+		Level: zap.NewAtomicLevelAt(zapcore.Level(-logging.Level2)),
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	flag.Parse()
+	zapOptions := kubezap.UseFlagOptions(&opts)
+	if opts.Development {
+		cfg := zap.NewDevelopmentEncoderConfig()
+		cfg.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000")
+		cfg.EncodeName = func(s string, encoder zapcore.PrimitiveArrayEncoder) {
+			encoder.AppendString(color.YellowString(s))
+		}
+		opts.Encoder = encoders.NewPrettyConsoleEncoder(cfg)
+	}
+	ctrl.SetLogger(kubezap.New(zapOptions))
+	setupLog.Info("Logger initialized", "level", opts.Level)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -107,7 +122,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting manager")
+	setupLog.Info("starting manager", "version", build.Version)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
