@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	appspaceliftiov1beta1 "github.com/spacelift-io/spacelift-operator/api/v1beta1"
-	spaceliftclient "github.com/spacelift-io/spacelift-operator/client"
+	spaceliftclient "github.com/spacelift-io/spacelift-operator/internal/spacelift/client"
 )
 
 // StackReconciler reconciles a Stack object

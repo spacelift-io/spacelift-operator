@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/shurcooL/graphql"
-	"github.com/spacelift-io/spacelift-operator/client"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/client"
 	"github.com/stretchr/testify/assert"
 )
 
