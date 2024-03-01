@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/pkg/errors"
 	"github.com/shurcooL/graphql"
@@ -64,7 +63,7 @@ func New(endpoint, keyID, keySecret string) (*client, error) {
 
 	session, err := session.FromAPIKey(ctx, httpClient)(endpoint, keyID, keySecret)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create spacelift session")
 	}
 
 	spaceliftClient := spacectl.New(httpClient, session)
@@ -78,12 +77,4 @@ func (c *client) Mutate(ctx context.Context, mutation interface{}, variables map
 
 func (c *client) Query(ctx context.Context, query interface{}, variables map[string]interface{}, opts ...graphql.RequestOption) error {
 	return c.wraps.Query(ctx, query, variables, opts...)
-}
-
-func (c *client) URL(format string, a ...interface{}) string {
-	return c.wraps.URL(format, a...)
-}
-
-func (c *client) Do(req *http.Request) (*http.Response, error) {
-	return c.wraps.Do(req)
 }
