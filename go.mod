@@ -7,6 +7,7 @@ toolchain go1.21.4
 require (
 	github.com/fatih/color v1.16.0
 	github.com/nwidger/jsoncolor v0.3.2
+	github.com/pkg/errors v0.9.1
 	github.com/shurcooL/graphql v0.0.0-20230722043721-ed46e5a46466
 	github.com/spacelift-io/spacectl v0.30.0
 	github.com/stretchr/testify v1.8.4
@@ -48,7 +49,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/onsi/ginkgo/v2 v2.13.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.16.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
