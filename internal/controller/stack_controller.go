@@ -19,12 +19,12 @@ package controller
 import (
 	"context"
 
+	"github.com/shurcooL/graphql"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/shurcooL/graphql"
 	appspaceliftiov1beta1 "github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	spaceliftclient "github.com/spacelift-io/spacelift-operator/client"
 )

@@ -5,22 +5,20 @@ import (
 	"net/http"
 
 	"github.com/shurcooL/graphql"
-	v1 "k8s.io/api/core/v1"
-	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
-
 	spacectl "github.com/spacelift-io/spacectl/client"
 	"github.com/spacelift-io/spacectl/client/session"
+	v1 "k8s.io/api/core/v1"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // SpaceliftClient is the authenticated client that can be used to interact with Spacelift
 var SpaceliftClient Client
 
 const (
-	// SecretName
-	SecretName                 = "spacelift-credentials"
-	SpaceliftApiKeyEndpointKey = "SPACELIFT_API_KEY_ENDPOINT"
-	SpaceliftApiKeyIDKey       = "SPACELIFT_API_KEY_ID"
-	SpaceliftApiKeySecretKey   = "SPACELIFT_API_KEY_SECRET"
+	SecretName                 = "spacelift-credentials"      //nolint:gosec
+	SpaceliftApiKeyEndpointKey = "SPACELIFT_API_KEY_ENDPOINT" //nolint:gosec
+	SpaceliftApiKeyIDKey       = "SPACELIFT_API_KEY_ID"       //nolint:gosec
+	SpaceliftApiKeySecretKey   = "SPACELIFT_API_KEY_SECRET"   //nolint:gosec
 )
 
 func GetSpaceliftClient(c k8sclient.Client, namespace string) (Client, error) {
