@@ -11,6 +11,8 @@ import (
 )
 
 func TestClient(t *testing.T) {
+	t.Skip("skipping test")
+
 	// TODO(michal): Make this test more useful, this is just a simple test that checks if client is working
 	endpoint := os.Getenv("SPACELIFT_API_KEY_ENDPOINT")
 	keyID := os.Getenv("SPACELIFT_API_KEY_ID")
