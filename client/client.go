@@ -5,10 +5,55 @@ import (
 	"net/http"
 
 	"github.com/shurcooL/graphql"
+	v1 "k8s.io/api/core/v1"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	spacectl "github.com/spacelift-io/spacectl/client"
 	"github.com/spacelift-io/spacectl/client/session"
 )
+
+// SpaceliftClient is the authenticated client that can be used to interact with Spacelift
+var SpaceliftClient Client
+
+const (
+	// SecretName
+	SecretName                 = "spacelift-credentials"
+	SpaceliftApiKeyEndpointKey = "SPACELIFT_API_KEY_ENDPOINT"
+	SpaceliftApiKeyIDKey       = "SPACELIFT_API_KEY_ID"
+	SpaceliftApiKeySecretKey   = "SPACELIFT_API_KEY_SECRET"
+)
+
+func GetSpaceliftClient(c k8sclient.Client, namespace string) (Client, error) {
+	if SpaceliftClient != nil {
+		return SpaceliftClient, nil
+	}
+
+	var secret v1.Secret
+
+	if err := c.Get(
+		context.Background(),
+		k8sclient.ObjectKey{
+			Namespace: namespace,
+			Name:      SecretName,
+		},
+		&secret,
+	); err != nil {
+		return nil, err
+	}
+
+	endpoint := string(secret.Data[SpaceliftApiKeyEndpointKey])
+	apiKeyID := string(secret.Data[SpaceliftApiKeyIDKey])
+	apiKeySecret := string(secret.Data[SpaceliftApiKeySecretKey])
+
+	spaceliftClient, err := New(endpoint, apiKeyID, apiKeySecret)
+	if err != nil {
+		return nil, err
+	}
+
+	SpaceliftClient = spaceliftClient
+
+	return SpaceliftClient, nil
+}
 
 type client struct {
 	wraps spacectl.Client
