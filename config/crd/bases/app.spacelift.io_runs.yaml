@@ -14,7 +14,11 @@ spec:
     singular: run
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - jsonPath: .status.state
+      name: State
+      type: string
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: Run is the Schema for the runs API
@@ -34,14 +38,35 @@ spec:
           spec:
             description: RunSpec defines the desired state of Run
             properties:
-              foo:
-                description: Foo is an example field of Run. Edit run_types.go to
-                  remove/update
+              stackName:
+                description: StackName is the name of the stack for this run, this
+                  is mandatory
+                minLength: 1
                 type: string
+            required:
+            - stackName
             type: object
           status:
             description: RunStatus defines the observed state of Run
+            properties:
+              argo:
+                description: Argo is a status that could be used by argo health check
+                  to sync on health
+                properties:
+                  health:
+                    description: ArgoHealth is a string type to represent the argo
+                      health of a resource More info on the argo doc here https://argo-cd.readthedocs.io/en/stable/operator-manual/health/
+                    type: string
+                required:
+                - health
+                type: object
+              state:
+                description: State is the run state, see RunState for all possibles
+                  state of a run
+                type: string
             type: object
+        required:
+        - spec
         type: object
     served: true
     storage: true

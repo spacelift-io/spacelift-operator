@@ -20,34 +20,44 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // RunSpec defines the desired state of Run
 type RunSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Run. Edit run_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// StackName is the name of the stack for this run, this is mandatory
+	// +kubebuilder:validation:MinLength=1
+	StackName string `json:"stackName"`
 }
+
+type RunState string
+
+const (
+	RunStateQueued = "QUEUED"
+)
 
 // RunStatus defines the observed state of Run
 type RunStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// State is the run state, see RunState for all possibles state of a run
+	State RunState `json:"state,omitempty"`
+	// Argo is a status that could be used by argo health check to sync on health
+	Argo *ArgoStatus `json:"argo,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="State",type=string,JSONPath=".status.state"
 
 // Run is the Schema for the runs API
 type Run struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   RunSpec   `json:"spec,omitempty"`
+	Spec   RunSpec   `json:"spec"`
 	Status RunStatus `json:"status,omitempty"`
+}
+
+// IsNew return true if the resource has just been created.
+// If status.state is nil, it means that the controller does not have handled it yet, so it mean that it's a new one
+func (r *Run) IsNew() bool {
+	return r.Status.State == ""
 }
 
 //+kubebuilder:object:root=true

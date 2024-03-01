@@ -37,6 +37,7 @@ import (
 	appspaceliftiov1beta1 "github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/build"
 	"github.com/spacelift-io/spacelift-operator/internal/controller"
+	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/logging"
 	"github.com/spacelift-io/spacelift-operator/internal/logging/encoders"
 )
@@ -104,9 +105,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	runRepo := repository.NewRunRepository(mgr.GetClient())
+
 	if err = (&controller.RunReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		RunRepository: runRepo,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Run")
 		os.Exit(1)
