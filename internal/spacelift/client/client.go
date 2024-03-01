@@ -21,15 +21,15 @@ const (
 	SpaceliftApiKeySecretKey   = "SPACELIFT_API_KEY_SECRET"   //nolint:gosec
 )
 
-func GetSpaceliftClient(c k8sclient.Client, namespace string) (Client, error) {
+func GetSpaceliftClient(ctx context.Context, client k8sclient.Client, namespace string) (Client, error) {
 	if SpaceliftClient != nil {
 		return SpaceliftClient, nil
 	}
 
 	var secret v1.Secret
 
-	if err := c.Get(
-		context.Background(),
+	if err := client.Get(
+		ctx,
 		k8sclient.ObjectKey{
 			Namespace: namespace,
 			Name:      SecretName,
