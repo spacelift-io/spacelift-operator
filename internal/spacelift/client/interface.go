@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/shurcooL/graphql"
 )
@@ -14,10 +13,4 @@ type Client interface {
 
 	// Mutate executes a single GraphQL mutation request.
 	Mutate(context.Context, interface{}, map[string]interface{}, ...graphql.RequestOption) error
-
-	// URL returns a full URL given a formatted path.
-	URL(string, ...interface{}) string
-
-	// Do executes an authenticated http request to the Spacelift API
-	Do(r *http.Request) (*http.Response, error)
 }
