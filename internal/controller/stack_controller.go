@@ -51,6 +51,7 @@ type StackReconciler struct {
 func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	// TODO(michal): it's just an exapmle usage of a client
 	spaceliftClient, err := spaceliftclient.GetSpaceliftClient(ctx, r.Client, req.Namespace)
 	if err != nil {
 		return ctrl.Result{}, err
