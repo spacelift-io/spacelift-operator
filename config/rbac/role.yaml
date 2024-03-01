@@ -30,3 +30,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - app.spacelift.io
+  resources:
+  - stacks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - app.spacelift.io
+  resources:
+  - stacks/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - app.spacelift.io
+  resources:
+  - stacks/status
+  verbs:
+  - get
+  - patch
+  - update
