@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/pkg/errors"
 	"github.com/shurcooL/graphql"
 	spacectl "github.com/spacelift-io/spacectl/client"
 	"github.com/spacelift-io/spacectl/client/session"
@@ -11,8 +12,8 @@ import (
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// SpaceliftClient is the authenticated client that can be used to interact with Spacelift
-var SpaceliftClient Client
+// spaceliftClient is the authenticated client that can be used to interact with Spacelift
+var spaceliftClient Client
 
 const (
 	SecretName                 = "spacelift-credentials"      //nolint:gosec
@@ -22,8 +23,8 @@ const (
 )
 
 func GetSpaceliftClient(ctx context.Context, client k8sclient.Client, namespace string) (Client, error) {
-	if SpaceliftClient != nil {
-		return SpaceliftClient, nil
+	if spaceliftClient != nil {
+		return spaceliftClient, nil
 	}
 
 	var secret v1.Secret
@@ -36,21 +37,21 @@ func GetSpaceliftClient(ctx context.Context, client k8sclient.Client, namespace 
 		},
 		&secret,
 	); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get spacelift credentials secret")
 	}
 
 	endpoint := string(secret.Data[SpaceliftApiKeyEndpointKey])
 	apiKeyID := string(secret.Data[SpaceliftApiKeyIDKey])
 	apiKeySecret := string(secret.Data[SpaceliftApiKeySecretKey])
 
-	spaceliftClient, err := New(endpoint, apiKeyID, apiKeySecret)
+	newSpaceliftClient, err := New(endpoint, apiKeyID, apiKeySecret)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create spacelift client")
 	}
 
-	SpaceliftClient = spaceliftClient
+	spaceliftClient = newSpaceliftClient
 
-	return SpaceliftClient, nil
+	return spaceliftClient, nil
 }
 
 type client struct {
