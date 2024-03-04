@@ -19,12 +19,14 @@ package controller
 import (
 	"context"
 
+	"github.com/shurcooL/graphql"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	appspaceliftiov1beta1 "github.com/spacelift-io/spacelift-operator/api/v1beta1"
+	spaceliftclient "github.com/spacelift-io/spacelift-operator/internal/spacelift/client"
 )
 
 // StackReconciler reconciles a Stack object
@@ -47,7 +49,31 @@ type StackReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.0/pkg/reconcile
 func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+
+	// TODO(michal): it's just an exapmle usage of a client
+	spaceliftClient, err := spaceliftclient.GetSpaceliftClient(ctx, r.Client, req.Namespace)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	var query struct {
+		Stack struct {
+			ID             string `graphql:"id"`
+			Administrative bool   `graphql:"administrative"`
+		} `graphql:"stack(id: $id)"`
+	}
+
+	variables := map[string]interface{}{
+		"id": graphql.ID("end-to-end-autoconfirm"),
+	}
+
+	err = spaceliftClient.Query(context.Background(), &query, variables)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	logger.Info("Succesfully fetched info for stack", "id", query.Stack.ID, "administrative", query.Stack.Administrative)
 
 	// TODO(user): your logic here
 
