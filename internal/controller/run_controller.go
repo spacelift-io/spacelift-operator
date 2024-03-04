@@ -23,6 +23,7 @@ import (
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -30,11 +31,15 @@ import (
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/logging"
+	spaceliftRepository "github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/watcher"
 )
 
 // RunReconciler reconciles a Run object
 type RunReconciler struct {
-	RunRepository *repository.RunRepository
+	RunRepository          *repository.RunRepository
+	SpaceliftRunRepository spaceliftRepository.RunRepository
+	RunWatcher             *watcher.RunWatcher
 }
 
 //+kubebuilder:rbac:groups=app.spacelift.io,resources=runs,verbs=get;list;watch;create;update;patch;delete
@@ -58,7 +63,7 @@ func (r *RunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	}
 	if err != nil {
 		logger.Error(err, "Unable to retrieve Run from kube API.")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	// If the run is new, then create it on spacelift and update the status
@@ -66,18 +71,23 @@ func (r *RunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return r.handleNewRun(ctx, run)
 	}
 
-	logger.Info("Run updated", logging.ArgoHealth, run.Status.Argo.Health)
-
-	return ctrl.Result{}, nil
+	return r.handleRunUpdate(ctx, run)
 }
 
 func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("New run created")
-	// TODO(eliecharra): Check that the stack exists based on spec.stackName
-	// TODO(eliecharra): Create the run on spacelift
-	run.Status.State = v1beta1.RunStateQueued
-	run.Status.Argo = &v1beta1.ArgoStatus{Health: v1beta1.ArgoHealthProgressing}
+	spaceliftRun, err := r.SpaceliftRunRepository.Create(ctx, run)
+	if err != nil {
+		logger.Error(err, "Unable to create the run in spacelift")
+		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
+		return ctrl.Result{}, nil
+	}
+	run.SetState(v1beta1.RunState(spaceliftRun.State))
+	run.Status.Id = spaceliftRun.RunID
+	logger.WithValues(
+		logging.RunState, run.Status.State,
+		logging.RunId, run.Status.Id,
+	).Info("New run created")
 	if err := r.RunRepository.UpdateStatus(ctx, run); err != nil {
 		if k8sErrors.IsConflict(err) {
 			logger.Info("Conflict on Run status update, let's try again.")
@@ -85,6 +95,30 @@ func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run) (ctr
 		}
 		return ctrl.Result{}, err
 	}
+	return ctrl.Result{}, nil
+}
+
+func (r *RunReconciler) handleRunUpdate(ctx context.Context, run *v1beta1.Run) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	// If a run is not terminated and not watched it probably mean that
+	// - a new run has been created
+	// - the controller has crashed and is restarting
+	// In that case we start a watcher on the run
+	if !run.IsTerminated() && !r.RunWatcher.IsWatched(run) {
+		if err := r.RunWatcher.Start(ctx, run); err != nil {
+			logger.Error(err, "Cannot start run watcher")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
+	}
+
+	logger.Info("Run updated",
+		logging.RunId, run.Status.Id,
+		logging.RunState, run.Status.State,
+		logging.ArgoHealth, run.Status.Argo.Health,
+	)
+
 	return ctrl.Result{}, nil
 }
 

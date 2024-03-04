@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
@@ -21,6 +22,13 @@ import (
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/controller"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/mocks"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/watcher"
+)
+
+const (
+	DefaultTimeout  = 10 * time.Second
+	DefaultInterval = 100 * time.Millisecond
 )
 
 type IntegrationTestSuite struct {
@@ -30,7 +38,9 @@ type IntegrationTestSuite struct {
 	cancel    context.CancelFunc
 	k8sClient client.Client
 	testEnv   *envtest.Environment
-	logs      *observer.ObservedLogs
+	Logs      *observer.ObservedLogs
+
+	FakeSpaceliftRunRepo *mocks.RunRepository
 
 	runRepo *repository.RunRepository
 }
@@ -42,7 +52,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		kubezap.RawZapOpts(
 			zap.WrapCore(func(core zapcore.Core) zapcore.Core {
 				zapCoreObserver, logs := observer.New(zapcore.InfoLevel)
-				s.logs = logs
+				s.Logs = logs
 				return zapcore.NewTee(core, zapCoreObserver)
 			})),
 	))
@@ -80,13 +90,29 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.runRepo = repository.NewRunRepository(mgr.GetClient())
-	err = (&controller.RunReconciler{RunRepository: s.runRepo}).SetupWithManager(mgr)
+	s.FakeSpaceliftRunRepo = new(mocks.RunRepository)
+	w := watcher.NewRunWatcher(s.runRepo, s.FakeSpaceliftRunRepo)
+	err = (&controller.RunReconciler{
+		RunRepository:          s.runRepo,
+		SpaceliftRunRepository: s.FakeSpaceliftRunRepo,
+		RunWatcher:             w,
+	}).SetupWithManager(mgr)
 	s.Require().NoError(err)
 
 	go func() {
 		err := mgr.Start(s.ctx)
 		s.Require().NoError(err)
 	}()
+}
+
+func (s *IntegrationTestSuite) SetupTest() {
+	s.FakeSpaceliftRunRepo.Test(s.T())
+}
+
+func (s *IntegrationTestSuite) TearDownTest() {
+	s.FakeSpaceliftRunRepo.AssertExpectations(s.T())
+	s.FakeSpaceliftRunRepo.Calls = nil
+	s.FakeSpaceliftRunRepo.ExpectedCalls = nil
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {

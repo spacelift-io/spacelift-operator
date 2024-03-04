@@ -30,13 +30,31 @@ type RunSpec struct {
 type RunState string
 
 const (
-	RunStateQueued = "QUEUED"
+	RunStateQueued      RunState = "QUEUED"
+	RunStateCanceled    RunState = "CANCELED"
+	RunStateFailed      RunState = "FAILED"
+	RunStateFinished    RunState = "FINISHED"
+	RunStateUnconfirmed RunState = "UNCONFIRMED"
+	RunStateDiscarded   RunState = "DISCARDED"
+	RunStateStopped     RunState = "STOPPED"
+	RunStateSkipped     RunState = "SKIPPED"
 )
+
+var terminalStates = map[RunState]interface{}{
+	RunStateCanceled:  nil,
+	RunStateFailed:    nil,
+	RunStateFinished:  nil,
+	RunStateDiscarded: nil,
+	RunStateStopped:   nil,
+	RunStateSkipped:   nil,
+}
 
 // RunStatus defines the observed state of Run
 type RunStatus struct {
 	// State is the run state, see RunState for all possibles state of a run
 	State RunState `json:"state,omitempty"`
+	// Id is the run ULID on Spacelift
+	Id string `json:"id,omitempty"`
 	// Argo is a status that could be used by argo health check to sync on health
 	Argo *ArgoStatus `json:"argo,omitempty"`
 }
@@ -44,6 +62,7 @@ type RunStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="State",type=string,JSONPath=".status.state"
+//+kubebuilder:printcolumn:name="Id",type=string,JSONPath=".status.id"
 
 // Run is the Schema for the runs API
 type Run struct {
@@ -58,6 +77,34 @@ type Run struct {
 // If status.state is nil, it means that the controller does not have handled it yet, so it mean that it's a new one
 func (r *Run) IsNew() bool {
 	return r.Status.State == ""
+}
+
+// IsTerminated returns true if the run is in a terminal state
+func (r *Run) IsTerminated() bool {
+	_, found := terminalStates[r.Status.State]
+	return found
+}
+
+// SetState set status.state and also update the argo health
+func (r *Run) SetState(state RunState) {
+	r.Status.State = state
+	argoHealth := &ArgoStatus{
+		Health: ArgoHealthProgressing,
+	}
+	if r.Status.State == RunStateFinished ||
+		r.Status.State == RunStateSkipped {
+		argoHealth.Health = ArgoHealthHealthy
+	}
+	if r.Status.State == RunStateUnconfirmed {
+		argoHealth.Health = ArgoHealthSuspended
+	}
+	if r.Status.State == RunStateFailed ||
+		r.Status.State == RunStateStopped ||
+		r.Status.State == RunStateCanceled ||
+		r.Status.State == RunStateDiscarded {
+		argoHealth.Health = ArgoHealthDegraded
+	}
+	r.Status.Argo = argoHealth
 }
 
 //+kubebuilder:object:root=true
