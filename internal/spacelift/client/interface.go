@@ -13,4 +13,7 @@ type Client interface {
 
 	// Mutate executes a single GraphQL mutation request.
 	Mutate(context.Context, interface{}, map[string]interface{}, ...graphql.RequestOption) error
+
+	// URL returns a full URL given a formatted path.
+	URL(string, ...interface{}) string
 }

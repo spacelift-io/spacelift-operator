@@ -18,6 +18,8 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 )
 
 // RunSpec defines the desired state of Run
@@ -85,9 +87,20 @@ func (r *Run) IsTerminated() bool {
 	return found
 }
 
-// SetState set status.state and also update the argo health
-func (r *Run) SetState(state RunState) {
-	r.Status.State = state
+type RunCreated struct {
+	Id, Url string
+	State   RunState
+}
+
+// SetRun is used to sync the k8s CRD with a spacelift run model.
+// It basically takes care of updating all status fields
+func (r *Run) SetRun(run *models.Run) {
+	if run.Id != "" {
+		r.Status.Id = run.Id
+	}
+	if run.State != "" {
+		r.Status.State = RunState(run.State)
+	}
 	argoHealth := &ArgoStatus{
 		Health: ArgoHealthProgressing,
 	}

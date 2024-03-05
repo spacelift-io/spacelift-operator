@@ -25,6 +25,10 @@ func (r *RunRepository) Get(ctx context.Context, name types.NamespacedName) (*v1
 	return &run, nil
 }
 
+func (r *RunRepository) Update(ctx context.Context, run *v1beta1.Run) error {
+	return r.client.Update(ctx, run)
+}
+
 func (r *RunRepository) UpdateStatus(ctx context.Context, run *v1beta1.Run) error {
 	return r.client.Status().Update(ctx, run)
 }
