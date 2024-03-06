@@ -93,7 +93,7 @@ func (w *RunWatcher) Start(ctx context.Context, run *v1beta1.Run) error {
 					continue
 				}
 
-				run.SetState(v1beta1.RunState(spaceliftRun.State))
+				run.SetRun(spaceliftRun)
 				if err := w.k8sRunRepo.UpdateStatus(ctxWithTimeout, run); err != nil {
 					if k8sErrors.IsConflict(err) {
 						logger.Info("Conflict updating run status, retrying immediately")

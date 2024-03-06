@@ -82,12 +82,25 @@ func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run) (ctr
 		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
 	}
-	run.SetState(v1beta1.RunState(spaceliftRun.State))
-	run.Status.Id = spaceliftRun.RunID
 	logger.WithValues(
 		logging.RunState, run.Status.State,
 		logging.RunId, run.Status.Id,
 	).Info("New run created")
+
+	// Set initial annotations when a run is created
+	if run.Annotations == nil {
+		run.Annotations = make(map[string]string, 1)
+	}
+	run.Annotations[v1beta1.ArgoExternalLink] = spaceliftRun.Url
+	// Updating annotations will not trigger another reconciliation loop
+	if err := r.RunRepository.Update(ctx, run); err != nil {
+		if k8sErrors.IsConflict(err) {
+			logger.Info("Conflict on Run update, let's try again.")
+			return ctrl.Result{RequeueAfter: time.Second * 3}, nil
+		}
+		return ctrl.Result{}, err
+	}
+	run.SetRun(spaceliftRun)
 	if err := r.RunRepository.UpdateStatus(ctx, run); err != nil {
 		if k8sErrors.IsConflict(err) {
 			logger.Info("Conflict on Run status update, let's try again.")

@@ -78,3 +78,7 @@ func (c *client) Mutate(ctx context.Context, mutation interface{}, variables map
 func (c *client) Query(ctx context.Context, query interface{}, variables map[string]interface{}, opts ...graphql.RequestOption) error {
 	return c.wraps.Query(ctx, query, variables, opts...)
 }
+
+func (c *client) URL(format string, a ...interface{}) string {
+	return c.wraps.URL(format, a...)
+}

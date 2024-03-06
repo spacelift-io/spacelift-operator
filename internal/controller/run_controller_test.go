@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
-	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 	"github.com/spacelift-io/spacelift-operator/tests/integration"
 )
 
@@ -95,7 +95,7 @@ func (s *RunControllerSuite) TestRunCreation_OK() {
 			return run.Status.State == v1beta1.RunStateQueued
 		})).
 		Once().
-		Return(&repository.GetRunOutput{
+		Return(&models.Run{
 			State: "READY",
 		}, nil)
 	s.FakeSpaceliftRunRepo.EXPECT().
@@ -103,7 +103,7 @@ func (s *RunControllerSuite) TestRunCreation_OK() {
 			return run.Status.State == "READY"
 		})).
 		Once().
-		Return(&repository.GetRunOutput{
+		Return(&models.Run{
 			State: "APPLYING",
 		}, nil)
 	s.FakeSpaceliftRunRepo.EXPECT().
@@ -111,7 +111,7 @@ func (s *RunControllerSuite) TestRunCreation_OK() {
 			return run.Status.State == "APPLYING"
 		})).
 		Once().
-		Return(&repository.GetRunOutput{
+		Return(&models.Run{
 			State: string(v1beta1.RunStateFinished),
 		}, nil)
 
@@ -120,6 +120,8 @@ func (s *RunControllerSuite) TestRunCreation_OK() {
 
 	// Assert that the Queued state has been applied
 	run = s.AssertRunState(run, "READY")
+	s.Require().NotNil(run.Annotations)
+	s.Assert().Equal("http://example.com/test", run.Annotations[v1beta1.ArgoExternalLink])
 	s.Require().NotNil(run.Status.Argo)
 	s.Assert().Equal(v1beta1.ArgoHealthProgressing, run.Status.Argo.Health)
 
@@ -147,7 +149,7 @@ func (s *RunControllerSuite) TestRunCreation_OK_WithErrorDuringWatch() {
 			return run.Status.State == v1beta1.RunStateQueued
 		})).
 		Once().
-		Return(&repository.GetRunOutput{
+		Return(&models.Run{
 			State: string(v1beta1.RunStateFinished),
 		}, nil).NotBefore(errCall)
 

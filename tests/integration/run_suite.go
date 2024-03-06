@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
-	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 )
 
 var DefaultValidRun = v1beta1.Run{
@@ -42,9 +42,10 @@ func (s *WithRunSuiteHelper) CreateTestRun() (*v1beta1.Run, error) {
 			return r.ObjectMeta.Annotations["test.id"] == fakeRunULID
 		})).
 		Once().
-		Return(&repository.CreateRunOutput{
-			RunID: fakeRunULID,
+		Return(&models.Run{
+			Id:    fakeRunULID,
 			State: string(v1beta1.RunStateQueued),
+			Url:   "http://example.com/test",
 		}, nil)
 	if err := s.Client().Create(s.Context(), &run); err != nil {
 		return nil, err

@@ -9,12 +9,13 @@ import (
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	spaceliftclient "github.com/spacelift-io/spacelift-operator/internal/spacelift/client"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 )
 
 //go:generate mockery --with-expecter --name RunRepository
 type RunRepository interface {
-	Create(context.Context, *v1beta1.Run) (*CreateRunOutput, error)
-	Get(context.Context, *v1beta1.Run) (*GetRunOutput, error)
+	Create(context.Context, *v1beta1.Run) (*models.Run, error)
+	Get(context.Context, *v1beta1.Run) (*models.Run, error)
 }
 
 type runRepository struct {
@@ -28,12 +29,7 @@ func NewRunRepository(client client.Client) *runRepository {
 type CreateRunQuery struct {
 }
 
-type CreateRunOutput struct {
-	RunID string
-	State string
-}
-
-func (r *runRepository) Create(ctx context.Context, run *v1beta1.Run) (*CreateRunOutput, error) {
+func (r *runRepository) Create(ctx context.Context, run *v1beta1.Run) (*models.Run, error) {
 	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, run.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating run")
@@ -50,17 +46,15 @@ func (r *runRepository) Create(ctx context.Context, run *v1beta1.Run) (*CreateRu
 	if err := c.Mutate(ctx, &mutation, vars); err != nil {
 		return nil, errors.Wrap(err, "unable to create run")
 	}
-	return &CreateRunOutput{
-		RunID: mutation.RunTrigger.ID,
+	url := c.URL("/stack/%s/run/%s", run.Spec.StackName, mutation.RunTrigger.ID)
+	return &models.Run{
+		Id:    mutation.RunTrigger.ID,
 		State: mutation.RunTrigger.State,
+		Url:   url,
 	}, nil
 }
 
-type GetRunOutput struct {
-	State string
-}
-
-func (r *runRepository) Get(ctx context.Context, run *v1beta1.Run) (*GetRunOutput, error) {
+func (r *runRepository) Get(ctx context.Context, run *v1beta1.Run) (*models.Run, error) {
 	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, run.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating run")
@@ -79,7 +73,7 @@ func (r *runRepository) Get(ctx context.Context, run *v1beta1.Run) (*GetRunOutpu
 	if err := c.Query(ctx, &query, vars); err != nil {
 		return nil, errors.Wrap(err, "unable to get run")
 	}
-	return &GetRunOutput{
+	return &models.Run{
 		State: query.Stack.Run.State,
 	}, nil
 }
