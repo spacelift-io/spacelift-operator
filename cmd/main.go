@@ -40,6 +40,8 @@ import (
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/logging"
 	"github.com/spacelift-io/spacelift-operator/internal/logging/encoders"
+	spaceliftRepository "github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/watcher"
 )
 
 var (
@@ -106,9 +108,13 @@ func main() {
 	}
 
 	runRepo := repository.NewRunRepository(mgr.GetClient())
+	spaceliftRunRepo := spaceliftRepository.NewRunRepository(mgr.GetClient())
+	runWatcher := watcher.NewRunWatcher(runRepo, spaceliftRunRepo)
 
 	if err = (&controller.RunReconciler{
-		RunRepository: runRepo,
+		RunRepository:          runRepo,
+		SpaceliftRunRepository: spaceliftRunRepo,
+		RunWatcher:             runWatcher,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Run")
 		os.Exit(1)

@@ -18,6 +18,9 @@ spec:
     - jsonPath: .status.state
       name: State
       type: string
+    - jsonPath: .status.id
+      name: Id
+      type: string
     name: v1beta1
     schema:
       openAPIV3Schema:
@@ -60,6 +63,9 @@ spec:
                 required:
                 - health
                 type: object
+              id:
+                description: Id is the run ULID on Spacelift
+                type: string
               state:
                 description: State is the run state, see RunState for all possibles
                   state of a run
