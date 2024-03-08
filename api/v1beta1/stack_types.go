@@ -18,24 +18,117 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
+)
 
 // StackSpec defines the desired state of Stack
 type StackSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Name      string     `json:"name"`
+	Settings  StackInput `json:"settings"`
+	CommitSHA *string    `json:"commitSHA,omitempty"`
+}
 
-	// Foo is an example field of Stack. Edit stack_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+type StackInput struct {
+	AdditionalProjectGlobs *[]string     `json:"additionalProjectGlobs,omitempty"`
+	Administrative         bool          `json:"administrative,omitempty"`
+	AfterApply             *[]string     `json:"afterApply,omitempty"`
+	AfterDestroy           *[]string     `json:"afterDestroy,omitempty"`
+	AfterInit              *[]string     `json:"afterInit,omitempty"`
+	AfterPerform           *[]string     `json:"afterPerform,omitempty"`
+	AfterPlan              *[]string     `json:"afterPlan,omitempty"`
+	AfterRun               *[]string     `json:"afterRun,omitempty"`
+	Autodeploy             *bool         `json:"autodeploy,omitempty"`
+	Autoretry              *bool         `json:"autoretry,omitempty"`
+	BeforeApply            *[]string     `json:"beforeApply,omitempty"`
+	BeforeDestroy          *[]string     `json:"beforeDestroy,omitempty"`
+	BeforeInit             *[]string     `json:"beforeInit,omitempty"`
+	BeforePerform          *[]string     `json:"beforePerform,omitempty"`
+	BeforePlan             *[]string     `json:"beforePlan,omitempty"`
+	Branch                 string        `json:"branch"`
+	Description            *string       `json:"description,,omitempty"`
+	GitHubActionDeploy     *bool         `json:"githubActionDeploy,omitempty"`
+	IsDisabled             *bool         `json:"isDisabled,omitempty"`
+	Labels                 *[]string     `json:"labels,omitempty"`
+	LocalPreviewEnabled    *bool         `json:"localPreviewEnabled,omitempty"`
+	Namespace              *string       `json:"namespace,omitempty"`
+	ProjectRoot            *string       `json:"projectRoot,omitempty"`
+	ProtectFromDeletion    *bool         `json:"protectFromDeletion,omitempty"`
+	Provider               *string       `json:"provider,omitempty"`
+	Repository             string        `json:"repository"`
+	RepositoryURL          *string       `json:"repositoryURL,omitempty"`
+	RunnerImage            *string       `json:"runnerImage,omitempty"`
+	Space                  *string       `json:"space,omitempty"`
+	TerraformVersion       *string       `json:"terraformVersion,omitempty"`
+	VCSInteragrionID       *string       `json:"vcsIntegrationId,omitempty"`
+	VendorConfig           *VendorConfig `json:"vendorConfig,omitempty"`
+	WorkerPool             *string       `json:"workerPool,omitempty"`
+
+	// In our API managesStateFile is not part of StackInput
+	ManagesStateFile bool `json:"managesStateFile,omitempty"`
+}
+
+type VendorConfig struct {
+	Ansible        *AnsibleConfig        `json:"ansible,omitempty"`
+	CloudFormation *CloudFormationConfig `json:"cloudFormation,omitempty"`
+	Kubernetes     *KubernetesConfig     `json:"kubernetes,omitempty"`
+	Pulumi         *PulumiConfig         `json:"pulumi,omitempty"`
+	Terraform      *TerraformConfig      `json:"terraform,omitempty"`
+	Terragrunt     *TerragruntConfig     `json:"terragrunt,omitempty"`
+}
+
+type AnsibleConfig struct {
+	Playbook string `json:"playbook"`
+}
+
+type CloudFormationConfig struct {
+	EntryTemplateFile string `json:"entryTemplateFile"`
+	Region            string `json:"region"`
+	StackName         string `json:"stackName"`
+	TemplateBucket    string `json:"templateBucket"`
+}
+
+type KubernetesConfig struct {
+	Namespace      string  `json:"namespace"`
+	KubectlVersion *string `json:"kubectlVersion,omitempty"`
+}
+
+type PulumiConfig struct {
+	LoginURL  string `json:"loginURL"`
+	StackName string `json:"stackName"`
+}
+
+type TerraformConfig struct {
+	UseSmartSanitization       bool    `json:"useSmartSanitization,omitempty"`
+	Version                    *string `json:"version,omitempty"`
+	WorkflowTool               *string `json:"workflowTool,omitempty"`
+	Workspace                  *string `json:"workspace,omitempty"`
+	ExternalStateAccessEnabled bool    `json:"externalStateAccessEnabled,omitempty"`
+}
+
+type TerragruntConfig struct {
+	TerraformVersion     string `json:"terraformVersion"`
+	TerragruntVersion    string `json:"terragruntVersion"`
+	UseRunAll            bool   `json:"useRunAll"`
+	UseSmartSanitization bool   `json:"useSmartSanitization"`
 }
 
 // StackStatus defines the observed state of Stack
 type StackStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// State is the stack state
+	Id                 string  `json:"id,omitempty"`
+	Url                string  `json:"url,omitempty"`
+	TrackedCommit      *Commit `json:"trackedCommit,omitempty"`
+	TrackedCommitSetBy *string `json:"trackedCommitSetBy,omitempty"`
+}
+
+type Commit struct {
+	AuthorLogin *string `json:"authorLogin,omitempty"`
+	AuthorName  string  `json:"authorName"`
+	Hash        string  `json:"hash"`
+	Message     string  `json:"message"`
+	Timestamp   uint    `json:"timestamp"`
+	URL         *string `json:"url,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -48,6 +141,39 @@ type Stack struct {
 
 	Spec   StackSpec   `json:"spec,omitempty"`
 	Status StackStatus `json:"status,omitempty"`
+}
+
+// IsNew return true if the resource has just been created.
+// If status.state is nil, it means that the controller does not have handled it yet, so it mean that it's a new one
+func (s *Stack) IsNew() bool {
+	return s.Status.Id == ""
+}
+
+// SetStack is used to sync the k8s CRD with a spacelift stack model.
+// It basically takes care of updating all status fields
+func (s *Stack) SetStack(stack *models.Stack) {
+	if stack.Id != "" {
+		s.Status.Id = stack.Id
+	}
+
+	if stack.Url != "" {
+		s.Status.Url = stack.Url
+	}
+
+	if stack.TrackedCommit != nil {
+		s.Status.TrackedCommit = &Commit{
+			AuthorLogin: stack.TrackedCommit.AuthorLogin,
+			AuthorName:  stack.TrackedCommit.AuthorName,
+			Hash:        stack.TrackedCommit.Hash,
+			Message:     stack.TrackedCommit.Message,
+			Timestamp:   stack.TrackedCommit.Timestamp,
+			URL:         stack.TrackedCommit.URL,
+		}
+	}
+
+	if stack.TrackedCommitSetBy != nil {
+		s.Status.TrackedCommitSetBy = stack.TrackedCommitSetBy
+	}
 }
 
 //+kubebuilder:object:root=true
