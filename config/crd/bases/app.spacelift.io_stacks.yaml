@@ -219,9 +219,33 @@ spec:
             description: StackStatus defines the observed state of Stack
             properties:
               id:
+                description: State is the stack state
                 type: string
               state:
-                description: State is the stack state
+                type: string
+              trackedCommit:
+                properties:
+                  authorLogin:
+                    type: string
+                  authorName:
+                    type: string
+                  hash:
+                    type: string
+                  message:
+                    type: string
+                  timestamp:
+                    type: integer
+                  url:
+                    type: string
+                required:
+                - authorName
+                - hash
+                - message
+                - timestamp
+                type: object
+              trackedCommitSetBy:
+                type: string
+              url:
                 type: string
             type: object
         type: object

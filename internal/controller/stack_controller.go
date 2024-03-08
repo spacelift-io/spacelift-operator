@@ -18,15 +18,17 @@ package controller
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
-	appspaceliftiov1beta1 "github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/logging"
 	spaceliftRepository "github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
@@ -57,7 +59,7 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	logger.Info("Reconciling Stack")
 	stack, err := r.StackRepository.Get(ctx, req.NamespacedName)
 
-	// The Run is removed, this should not happen because we filter out deletion events.
+	// The Stack is removed, this should not happen because we filter out deletion events.
 	// This can't really hurt and makes the reconciliation logic a bit more straightforward to read
 	if err != nil && k8sErrors.IsNotFound(err) {
 		return ctrl.Result{}, nil
@@ -110,6 +112,18 @@ func (r *StackReconciler) handleNewStack(ctx context.Context, stack *v1beta1.Sta
 // SetupWithManager sets up the controller with the Manager.
 func (r *StackReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appspaceliftiov1beta1.Stack{}).
+		For(&v1beta1.Stack{}).
+		WithEventFilter(predicate.Funcs{
+			// Always handle new resource creation
+			CreateFunc: func(event.CreateEvent) bool { return true },
+			// Let's consider run immutables and only care about update on the status
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				oldStack, _ := e.ObjectOld.(*v1beta1.Stack)
+				newStack, _ := e.ObjectNew.(*v1beta1.Stack)
+				return !reflect.DeepEqual(oldStack.Status, newStack.Status)
+			},
+			// We don't care about run removal
+			DeleteFunc: func(event.DeleteEvent) bool { return false },
+		}).
 		Complete(r)
 }

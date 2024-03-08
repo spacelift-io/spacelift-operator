@@ -22,9 +22,6 @@ import (
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // StackSpec defines the desired state of Stack
 type StackSpec struct {
 	StackInput StackInput `json:"stackInput"`
@@ -117,8 +114,20 @@ type TerragruntConfig struct {
 // StackStatus defines the observed state of Stack
 type StackStatus struct {
 	// State is the stack state
-	State string `json:"state,omitempty"`
-	Id    string `json:"id,omitempty"`
+	Id                 string  `json:"id,omitempty"`
+	State              string  `json:"state,omitempty"`
+	Url                string  `json:"url,omitempty"`
+	TrackedCommit      *Commit `json:"trackedCommit,omitempty"`
+	TrackedCommitSetBy *string `json:"trackedCommitSetBy,omitempty"`
+}
+
+type Commit struct {
+	AuthorLogin *string `json:"authorLogin,omitempty"`
+	AuthorName  string  `json:"authorName"`
+	Hash        string  `json:"hash"`
+	Message     string  `json:"message"`
+	Timestamp   uint    `json:"timestamp"`
+	URL         *string `json:"url,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -148,6 +157,25 @@ func (s *Stack) SetStack(stack *models.Stack) {
 
 	if stack.State != "" {
 		s.Status.State = stack.State
+	}
+
+	if stack.Url != "" {
+		s.Status.Url = stack.Url
+	}
+
+	if stack.TrackedCommit != nil {
+		s.Status.TrackedCommit = &Commit{
+			AuthorLogin: stack.TrackedCommit.AuthorLogin,
+			AuthorName:  stack.TrackedCommit.AuthorName,
+			Hash:        stack.TrackedCommit.Hash,
+			Message:     stack.TrackedCommit.Message,
+			Timestamp:   stack.TrackedCommit.Timestamp,
+			URL:         stack.TrackedCommit.URL,
+		}
+	}
+
+	if stack.TrackedCommitSetBy != nil {
+		s.Status.TrackedCommitSetBy = stack.TrackedCommitSetBy
 	}
 }
 

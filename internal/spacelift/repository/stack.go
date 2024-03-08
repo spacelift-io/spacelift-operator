@@ -41,29 +41,71 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating stack")
 	}
 
-	var mutation struct {
+	var stackCreateMutation struct {
 		StackCreate struct {
 			ID    string `graphql:"id"`
 			State string `graphql:"state"`
-		} `graphql:"stackCreate(input: $input, manageState: $manageState, stackObjectID: $stackObjectID, slug: $slug)"`
+		} `graphql:"stackCreate(input: $input, manageState: $manageState)"`
 	}
 
 	stackInput := structs.FromStackSpec(stack.Spec.StackInput)
-	vars := map[string]interface{}{
-		"input":         stackInput,
-		"manageState":   graphql.Boolean(stack.Spec.ManagesStateFile),
-		"stackObjectID": (*graphql.String)(nil),
-		"slug":          (*graphql.String)(nil),
+	stackCreateMutationVars := map[string]interface{}{
+		"input":       stackInput,
+		"manageState": graphql.Boolean(stack.Spec.ManagesStateFile),
 	}
 
-	if err := c.Mutate(ctx, &mutation, vars); err != nil {
+	if err := c.Mutate(ctx, &stackCreateMutation, stackCreateMutationVars); err != nil {
 		return nil, errors.Wrap(err, "unable to create stack")
 	}
-	url := c.URL("/stack/%s", mutation.StackCreate.ID)
+	url := c.URL("/stack/%s", stackCreateMutation.StackCreate.ID)
+
+	// Commit not specified in the spec
+	if stack.Spec.CommitSHA == nil {
+		return &models.Stack{
+			Id:    stackCreateMutation.StackCreate.ID,
+			State: stackCreateMutation.StackCreate.State,
+			Url:   url,
+		}, nil
+	}
+
+	var setTrackedCommitMutation struct {
+		StackCreate struct {
+			ID            string `graphql:"id"`
+			State         string `graphql:"state"`
+			TrackedCommit struct {
+				AuthorLogin *string `graphql:"authorLogin"`
+				AuthorName  string  `graphql:"authorName"`
+				Hash        string  `graphql:"hash"`
+				Message     string  `graphql:"message"`
+				Timestamp   uint    `graphql:"timestamp"`
+				URL         *string `graphql:"url"`
+			} `graphql:"trackedCommit"`
+			TrackedCommitSetBy *string `graphql:"trackedCommitSetBy"`
+		} `graphql:"stackSetCurrentCommit(id: $id, sha: $sha)"`
+	}
+
+	setTrackedCommitMutationVars := map[string]interface{}{
+		"id":  stackCreateMutation.StackCreate.ID,
+		"sha": graphql.String(*stack.Spec.CommitSHA),
+	}
+
+	if err := c.Mutate(ctx, &setTrackedCommitMutation, setTrackedCommitMutationVars); err != nil {
+		return nil, errors.Wrap(err, "unable to set tracked commit on stack")
+	}
+
 	return &models.Stack{
-		Id:    mutation.StackCreate.ID,
-		State: mutation.StackCreate.State,
+		Id:    stackCreateMutation.StackCreate.ID,
+		State: stackCreateMutation.StackCreate.State,
 		Url:   url,
+		TrackedCommit: &models.Commit{
+			AuthorLogin: setTrackedCommitMutation.StackCreate.TrackedCommit.AuthorLogin,
+			AuthorName:  setTrackedCommitMutation.StackCreate.TrackedCommit.AuthorName,
+			Hash:        setTrackedCommitMutation.StackCreate.TrackedCommit.Hash,
+			Message:     setTrackedCommitMutation.StackCreate.TrackedCommit.Message,
+			Timestamp:   setTrackedCommitMutation.StackCreate.TrackedCommit.Timestamp,
+			URL:         setTrackedCommitMutation.StackCreate.TrackedCommit.URL,
+		},
+		TrackedCommitSetBy: setTrackedCommitMutation.StackCreate.TrackedCommitSetBy,
 	}, nil
 }
 
