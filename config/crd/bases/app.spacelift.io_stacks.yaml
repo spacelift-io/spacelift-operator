@@ -36,10 +36,9 @@ spec:
             properties:
               commitSHA:
                 type: string
-              managesStateFile:
-                description: In our API managesStateFile is not part of StackInput
-                type: boolean
-              stackInput:
+              name:
+                type: string
+              settings:
                 properties:
                   additionalProjectGlobs:
                     items:
@@ -109,8 +108,9 @@ spec:
                     type: array
                   localPreviewEnabled:
                     type: boolean
-                  name:
-                    type: string
+                  managesStateFile:
+                    description: In our API managesStateFile is not part of StackInput
+                    type: boolean
                   namespace:
                     type: string
                   projectRoot:
@@ -209,11 +209,11 @@ spec:
                     type: string
                 required:
                 - branch
-                - name
                 - repository
                 type: object
             required:
-            - stackInput
+            - name
+            - settings
             type: object
           status:
             description: StackStatus defines the observed state of Stack

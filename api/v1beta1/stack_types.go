@@ -24,10 +24,9 @@ import (
 
 // StackSpec defines the desired state of Stack
 type StackSpec struct {
-	StackInput StackInput `json:"stackInput"`
-	// In our API managesStateFile is not part of StackInput
-	ManagesStateFile bool    `json:"managesStateFile,omitempty"`
-	CommitSHA        *string `json:"commitSHA,omitempty"`
+	Name      string     `json:"name"`
+	Settings  StackInput `json:"settings"`
+	CommitSHA *string    `json:"commitSHA,omitempty"`
 }
 
 type StackInput struct {
@@ -52,7 +51,6 @@ type StackInput struct {
 	IsDisabled             *bool         `json:"isDisabled,omitempty"`
 	Labels                 *[]string     `json:"labels,omitempty"`
 	LocalPreviewEnabled    *bool         `json:"localPreviewEnabled,omitempty"`
-	Name                   string        `json:"name"`
 	Namespace              *string       `json:"namespace,omitempty"`
 	ProjectRoot            *string       `json:"projectRoot,omitempty"`
 	ProtectFromDeletion    *bool         `json:"protectFromDeletion,omitempty"`
@@ -65,7 +63,11 @@ type StackInput struct {
 	VCSInteragrionID       *string       `json:"vcsIntegrationId,omitempty"`
 	VendorConfig           *VendorConfig `json:"vendorConfig,omitempty"`
 	WorkerPool             *string       `json:"workerPool,omitempty"`
+
+	// In our API managesStateFile is not part of StackInput
+	ManagesStateFile bool `json:"managesStateFile,omitempty"`
 }
+
 type VendorConfig struct {
 	Ansible        *AnsibleConfig        `json:"ansible,omitempty"`
 	CloudFormation *CloudFormationConfig `json:"cloudFormation,omitempty"`

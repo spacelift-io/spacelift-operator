@@ -9,9 +9,9 @@ metadata:
     app.kubernetes.io/created-by: spacelift-operator
   name: stack-sample
 spec:
-  stackInput:
+  name: spacelift-operator-stack
+  settings:
     branch: main
-    name: spacelift-operator-stack
     repository: empty
   commitSHA: 8fd7048876cdcc4e698d35f89dd816f705e175f7
 

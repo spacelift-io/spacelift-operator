@@ -92,42 +92,42 @@ type TerraformInput struct {
 	ExternalStateAccessEnabled *graphql.Boolean `json:"externalStateAccessEnabled"`
 }
 
-func FromStackSpec(stackInput v1beta1.StackInput) StackInput {
+func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 	ret := StackInput{
-		Administrative:      graphql.Boolean(stackInput.Administrative),
-		Autodeploy:          getGraphQLBoolean(stackInput.Autodeploy),
-		Autoretry:           getGraphQLBoolean(stackInput.Autoretry),
-		Branch:              graphql.String(stackInput.Branch),
-		GitHubActionDeploy:  getGraphQLBoolean(stackInput.GitHubActionDeploy),
-		LocalPreviewEnabled: getGraphQLBoolean(stackInput.LocalPreviewEnabled),
-		Name:                graphql.String(stackInput.Name),
-		ProtectFromDeletion: getGraphQLBoolean(stackInput.ProtectFromDeletion),
-		Repository:          graphql.String(stackInput.Repository),
+		Administrative:      graphql.Boolean(stackSpec.Settings.Administrative),
+		Autodeploy:          getGraphQLBoolean(stackSpec.Settings.Autodeploy),
+		Autoretry:           getGraphQLBoolean(stackSpec.Settings.Autoretry),
+		Branch:              graphql.String(stackSpec.Settings.Branch),
+		GitHubActionDeploy:  getGraphQLBoolean(stackSpec.Settings.GitHubActionDeploy),
+		LocalPreviewEnabled: getGraphQLBoolean(stackSpec.Settings.LocalPreviewEnabled),
+		Name:                graphql.String(stackSpec.Name),
+		ProtectFromDeletion: getGraphQLBoolean(stackSpec.Settings.ProtectFromDeletion),
+		Repository:          graphql.String(stackSpec.Settings.Repository),
 	}
 
-	ret.AddditionalProjectGlobs = getGraphQLStrings(stackInput.AdditionalProjectGlobs)
-	ret.AfterApply = getGraphQLStrings(stackInput.AfterApply)
-	ret.AfterDestroy = getGraphQLStrings(stackInput.AfterDestroy)
-	ret.AfterInit = getGraphQLStrings(stackInput.AfterInit)
-	ret.AfterPerform = getGraphQLStrings(stackInput.AfterPerform)
-	ret.AfterPlan = getGraphQLStrings(stackInput.AfterPlan)
-	ret.AfterRun = getGraphQLStrings(stackInput.AfterRun)
-	ret.BeforeApply = getGraphQLStrings(stackInput.BeforeApply)
-	ret.BeforeDestroy = getGraphQLStrings(stackInput.BeforeDestroy)
-	ret.BeforeInit = getGraphQLStrings(stackInput.BeforeInit)
-	ret.BeforePerform = getGraphQLStrings(stackInput.BeforePerform)
-	ret.BeforePlan = getGraphQLStrings(stackInput.BeforePlan)
-	ret.Description = getGraphQLString(stackInput.Description)
-	ret.Provider = getGraphQLString(stackInput.Provider)
-	ret.Labels = getGraphQLStrings(stackInput.Labels)
-	ret.Space = getGraphQLString(stackInput.Space)
-	ret.ProjectRoot = getGraphQLString(stackInput.ProjectRoot)
+	ret.AddditionalProjectGlobs = getGraphQLStrings(stackSpec.Settings.AdditionalProjectGlobs)
+	ret.AfterApply = getGraphQLStrings(stackSpec.Settings.AfterApply)
+	ret.AfterDestroy = getGraphQLStrings(stackSpec.Settings.AfterDestroy)
+	ret.AfterInit = getGraphQLStrings(stackSpec.Settings.AfterInit)
+	ret.AfterPerform = getGraphQLStrings(stackSpec.Settings.AfterPerform)
+	ret.AfterPlan = getGraphQLStrings(stackSpec.Settings.AfterPlan)
+	ret.AfterRun = getGraphQLStrings(stackSpec.Settings.AfterRun)
+	ret.BeforeApply = getGraphQLStrings(stackSpec.Settings.BeforeApply)
+	ret.BeforeDestroy = getGraphQLStrings(stackSpec.Settings.BeforeDestroy)
+	ret.BeforeInit = getGraphQLStrings(stackSpec.Settings.BeforeInit)
+	ret.BeforePerform = getGraphQLStrings(stackSpec.Settings.BeforePerform)
+	ret.BeforePlan = getGraphQLStrings(stackSpec.Settings.BeforePlan)
+	ret.Description = getGraphQLString(stackSpec.Settings.Description)
+	ret.Provider = getGraphQLString(stackSpec.Settings.Provider)
+	ret.Labels = getGraphQLStrings(stackSpec.Settings.Labels)
+	ret.Space = getGraphQLString(stackSpec.Settings.Space)
+	ret.ProjectRoot = getGraphQLString(stackSpec.Settings.ProjectRoot)
 
-	ret.RunnerImage = getGraphQLString(stackInput.RunnerImage)
+	ret.RunnerImage = getGraphQLString(stackSpec.Settings.RunnerImage)
 
-	ret.VendorConfig = getVendorConfig(stackInput.VendorConfig)
+	ret.VendorConfig = getVendorConfig(stackSpec.Settings.VendorConfig)
 
-	ret.WorkerPool = getGraphQLID(stackInput.WorkerPool)
+	ret.WorkerPool = getGraphQLID(stackSpec.Settings.WorkerPool)
 
 	return ret
 }
