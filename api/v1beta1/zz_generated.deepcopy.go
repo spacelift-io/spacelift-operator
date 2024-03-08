@@ -331,6 +331,16 @@ func (in *StackInput) DeepCopyInto(out *StackInput) {
 			copy(*out, *in)
 		}
 	}
+	if in.Autodeploy != nil {
+		in, out := &in.Autodeploy, &out.Autodeploy
+		*out = new(bool)
+		**out = **in
+	}
+	if in.Autoretry != nil {
+		in, out := &in.Autoretry, &out.Autoretry
+		*out = new(bool)
+		**out = **in
+	}
 	if in.BeforeApply != nil {
 		in, out := &in.BeforeApply, &out.BeforeApply
 		*out = new([]string)
@@ -381,6 +391,16 @@ func (in *StackInput) DeepCopyInto(out *StackInput) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.GitHubActionDeploy != nil {
+		in, out := &in.GitHubActionDeploy, &out.GitHubActionDeploy
+		*out = new(bool)
+		**out = **in
+	}
+	if in.IsDisabled != nil {
+		in, out := &in.IsDisabled, &out.IsDisabled
+		*out = new(bool)
+		**out = **in
+	}
 	if in.Labels != nil {
 		in, out := &in.Labels, &out.Labels
 		*out = new([]string)
@@ -390,6 +410,11 @@ func (in *StackInput) DeepCopyInto(out *StackInput) {
 			copy(*out, *in)
 		}
 	}
+	if in.LocalPreviewEnabled != nil {
+		in, out := &in.LocalPreviewEnabled, &out.LocalPreviewEnabled
+		*out = new(bool)
+		**out = **in
+	}
 	if in.Namespace != nil {
 		in, out := &in.Namespace, &out.Namespace
 		*out = new(string)
@@ -398,6 +423,11 @@ func (in *StackInput) DeepCopyInto(out *StackInput) {
 	if in.ProjectRoot != nil {
 		in, out := &in.ProjectRoot, &out.ProjectRoot
 		*out = new(string)
+		**out = **in
+	}
+	if in.ProtectFromDeletion != nil {
+		in, out := &in.ProtectFromDeletion, &out.ProtectFromDeletion
+		*out = new(bool)
 		**out = **in
 	}
 	if in.Provider != nil {

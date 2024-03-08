@@ -39,8 +39,8 @@ type StackInput struct {
 	AfterPerform           *[]string     `json:"afterPerform,omitempty"`
 	AfterPlan              *[]string     `json:"afterPlan,omitempty"`
 	AfterRun               *[]string     `json:"afterRun,omitempty"`
-	Autodeploy             bool          `json:"autodeploy,omitempty"`
-	Autoretry              bool          `json:"autoretry,omitempty"`
+	Autodeploy             *bool         `json:"autodeploy,omitempty"`
+	Autoretry              *bool         `json:"autoretry,omitempty"`
 	BeforeApply            *[]string     `json:"beforeApply,omitempty"`
 	BeforeDestroy          *[]string     `json:"beforeDestroy,omitempty"`
 	BeforeInit             *[]string     `json:"beforeInit,omitempty"`
@@ -48,14 +48,14 @@ type StackInput struct {
 	BeforePlan             *[]string     `json:"beforePlan,omitempty"`
 	Branch                 string        `json:"branch"`
 	Description            *string       `json:"description,,omitempty"`
-	GitHubActionDeploy     bool          `json:"githubActionDeploy,omitempty"`
-	IsDisabled             bool          `json:"isDisabled,omitempty"`
+	GitHubActionDeploy     *bool         `json:"githubActionDeploy,omitempty"`
+	IsDisabled             *bool         `json:"isDisabled,omitempty"`
 	Labels                 *[]string     `json:"labels,omitempty"`
-	LocalPreviewEnabled    bool          `json:"localPreviewEnabled,omitempty"`
+	LocalPreviewEnabled    *bool         `json:"localPreviewEnabled,omitempty"`
 	Name                   string        `json:"name"`
 	Namespace              *string       `json:"namespace,omitempty"`
 	ProjectRoot            *string       `json:"projectRoot,omitempty"`
-	ProtectFromDeletion    bool          `json:"protectFromDeletion,omitempty"`
+	ProtectFromDeletion    *bool         `json:"protectFromDeletion,omitempty"`
 	Provider               *string       `json:"provider,omitempty"`
 	Repository             string        `json:"repository"`
 	RepositoryURL          *string       `json:"repositoryURL,omitempty"`

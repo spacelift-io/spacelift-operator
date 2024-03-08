@@ -16,8 +16,8 @@ type StackInput struct {
 	AfterPerform            *[]graphql.String  `json:"afterPerform"`
 	AfterPlan               *[]graphql.String  `json:"afterPlan"`
 	AfterRun                *[]graphql.String  `json:"afterRun"`
-	Autodeploy              graphql.Boolean    `json:"autodeploy"`
-	Autoretry               graphql.Boolean    `json:"autoretry"`
+	Autodeploy              *graphql.Boolean   `json:"autodeploy"`
+	Autoretry               *graphql.Boolean   `json:"autoretry"`
 	BeforeApply             *[]graphql.String  `json:"beforeApply"`
 	BeforeDestroy           *[]graphql.String  `json:"beforeDestroy"`
 	BeforeInit              *[]graphql.String  `json:"beforeInit"`
@@ -25,13 +25,13 @@ type StackInput struct {
 	BeforePlan              *[]graphql.String  `json:"beforePlan"`
 	Branch                  graphql.String     `json:"branch"`
 	Description             *graphql.String    `json:"description"`
-	GitHubActionDeploy      graphql.Boolean    `json:"githubActionDeploy"`
+	GitHubActionDeploy      *graphql.Boolean   `json:"githubActionDeploy"`
 	Labels                  *[]graphql.String  `json:"labels"`
-	LocalPreviewEnabled     graphql.Boolean    `json:"localPreviewEnabled"`
+	LocalPreviewEnabled     *graphql.Boolean   `json:"localPreviewEnabled"`
 	Name                    graphql.String     `json:"name"`
 	Namespace               *graphql.String    `json:"namespace"`
 	ProjectRoot             *graphql.String    `json:"projectRoot"`
-	ProtectFromDeletion     graphql.Boolean    `json:"protectFromDeletion"`
+	ProtectFromDeletion     *graphql.Boolean   `json:"protectFromDeletion"`
 	Provider                *graphql.String    `json:"provider"`
 	Repository              graphql.String     `json:"repository"`
 	RepositoryURL           *graphql.String    `json:"repositoryURL"`
@@ -95,13 +95,13 @@ type TerraformInput struct {
 func FromStackSpec(stackInput v1beta1.StackInput) StackInput {
 	ret := StackInput{
 		Administrative:      graphql.Boolean(stackInput.Administrative),
-		Autodeploy:          graphql.Boolean(stackInput.Autodeploy),
-		Autoretry:           graphql.Boolean(stackInput.Autoretry),
+		Autodeploy:          getGraphQLBoolean(stackInput.Autodeploy),
+		Autoretry:           getGraphQLBoolean(stackInput.Autoretry),
 		Branch:              graphql.String(stackInput.Branch),
-		GitHubActionDeploy:  graphql.Boolean(stackInput.GitHubActionDeploy),
-		LocalPreviewEnabled: graphql.Boolean(stackInput.LocalPreviewEnabled),
+		GitHubActionDeploy:  getGraphQLBoolean(stackInput.GitHubActionDeploy),
+		LocalPreviewEnabled: getGraphQLBoolean(stackInput.LocalPreviewEnabled),
 		Name:                graphql.String(stackInput.Name),
-		ProtectFromDeletion: graphql.Boolean(stackInput.ProtectFromDeletion),
+		ProtectFromDeletion: getGraphQLBoolean(stackInput.ProtectFromDeletion),
 		Repository:          graphql.String(stackInput.Repository),
 	}
 
@@ -130,6 +130,14 @@ func FromStackSpec(stackInput v1beta1.StackInput) StackInput {
 	ret.WorkerPool = getGraphQLID(stackInput.WorkerPool)
 
 	return ret
+}
+
+func getGraphQLBoolean(input *bool) *graphql.Boolean {
+	if input == nil {
+		return nil
+	}
+
+	return graphql.NewBoolean(graphql.Boolean(*input))
 }
 
 func getGraphQLStrings(input *[]string) *[]graphql.String {
