@@ -5,4 +5,7 @@ const (
 
 	RunId    = "run.id"
 	RunState = "run.state"
+
+	StackId    = "stack.id"
+	StackState = "stack.state"
 )

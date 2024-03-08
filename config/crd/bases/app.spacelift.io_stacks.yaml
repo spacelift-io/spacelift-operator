@@ -34,32 +34,183 @@ spec:
           spec:
             description: StackSpec defines the desired state of Stack
             properties:
+              additionalProjectGlobs:
+                items:
+                  type: string
+                type: array
+              administrative:
+                type: boolean
+              afterApply:
+                items:
+                  type: string
+                type: array
+              afterDestroy:
+                items:
+                  type: string
+                type: array
+              afterInit:
+                items:
+                  type: string
+                type: array
+              afterPerform:
+                items:
+                  type: string
+                type: array
+              afterPlan:
+                items:
+                  type: string
+                type: array
+              afterRun:
+                items:
+                  type: string
+                type: array
+              autodeploy:
+                type: boolean
+              autoretry:
+                type: boolean
+              beforeApply:
+                items:
+                  type: string
+                type: array
+              beforeDestroy:
+                items:
+                  type: string
+                type: array
+              beforeInit:
+                items:
+                  type: string
+                type: array
+              beforePerform:
+                items:
+                  type: string
+                type: array
+              beforePlan:
+                items:
+                  type: string
+                type: array
+              branch:
+                type: string
+              description:
+                type: string
+              githubActionDeploy:
+                type: boolean
+              isDisabled:
+                type: boolean
+              labels:
+                items:
+                  type: string
+                type: array
+              localPreviewEnabled:
+                type: boolean
               managesStateFile:
-                description: Administrative         bool     `json:"administrative"`
-                  AfterApply             []string `json:"afterApply"` AfterDestroy           []string
-                  `json:"afterDestroy"` AfterInit              []string `json:"afterInit"`
-                  AfterPerform           []string `json:"afterPerform"` AfterPlan              []string
-                  `json:"afterPlan"` AfterRun               []string `json:"afterRun"`
-                  Autodeploy             bool     `json:"autodeploy"` Autoretry              bool     `json:"autoretry"`
-                  BeforeApply            []string `json:"beforeApply"` BeforeDestroy          []string
-                  `json:"beforeDestroy"` BeforeInit             []string `json:"beforeInit"`
-                  BeforePerform          []string `json:"beforePerform"` BeforePlan             []string
-                  `json:"beforePlan"` Branch                 string   `json:"branch"`
-                  Description            *string  `json:"description,,omitempty"`
-                  GitHubActionDeploy     bool     `json:"githubActionDeploy"` IsDisabled             bool     `json:"isDisabled"`
-                  Labels                 []string `json:"labels"` LocalPreviewEnabled    bool     `json:"localPreviewEnabled"`
                 type: boolean
               name:
-                minLength: 1
+                type: string
+              namespace:
+                type: string
+              projectRoot:
+                type: string
+              protectFromDeletion:
+                type: boolean
+              provider:
+                type: string
+              repository:
+                type: string
+              repositoryURL:
+                type: string
+              runnerImage:
+                type: string
+              space:
+                type: string
+              terraformVersion:
+                type: string
+              vcsIntegrationId:
+                type: string
+              vendorConfig:
+                properties:
+                  ansible:
+                    properties:
+                      playbook:
+                        type: string
+                    required:
+                    - playbook
+                    type: object
+                  cloudFormation:
+                    properties:
+                      entryTemplateFile:
+                        type: string
+                      region:
+                        type: string
+                      stackName:
+                        type: string
+                      templateBucket:
+                        type: string
+                    required:
+                    - entryTemplateFile
+                    - region
+                    - stackName
+                    - templateBucket
+                    type: object
+                  kubernetes:
+                    properties:
+                      kubectlVersion:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - namespace
+                    type: object
+                  pulumi:
+                    properties:
+                      loginURL:
+                        type: string
+                      stackName:
+                        type: string
+                    required:
+                    - loginURL
+                    - stackName
+                    type: object
+                  terraform:
+                    properties:
+                      externalStateAccessEnabled:
+                        type: boolean
+                      useSmartSanitization:
+                        type: boolean
+                      version:
+                        type: string
+                      workflowTool:
+                        type: string
+                      workspace:
+                        type: string
+                    type: object
+                  terragrunt:
+                    properties:
+                      terraformVersion:
+                        type: string
+                      terragruntVersion:
+                        type: string
+                      useRunAll:
+                        type: boolean
+                      useSmartSanitization:
+                        type: boolean
+                    required:
+                    - terraformVersion
+                    - terragruntVersion
+                    - useRunAll
+                    - useSmartSanitization
+                    type: object
+                type: object
+              workerPool:
                 type: string
             required:
-            - managesStateFile
+            - branch
             - name
+            - repository
             type: object
           status:
             description: StackStatus defines the observed state of Stack
             properties:
-              name:
+              id:
                 type: string
               state:
                 description: State is the stack state

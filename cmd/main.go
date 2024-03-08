@@ -108,7 +108,9 @@ func main() {
 	}
 
 	runRepo := repository.NewRunRepository(mgr.GetClient())
+	stackRepo := repository.NewStackRepository(mgr.GetClient())
 	spaceliftRunRepo := spaceliftRepository.NewRunRepository(mgr.GetClient())
+	spaceliftStackRepo := spaceliftRepository.NewStackRepository(mgr.GetClient())
 	runWatcher := watcher.NewRunWatcher(runRepo, spaceliftRunRepo)
 
 	if err = (&controller.RunReconciler{
@@ -120,8 +122,8 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controller.StackReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		StackRepository:          stackRepo,
+		SpaceliftStackRepository: spaceliftStackRepo,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Stack")
 		os.Exit(1)

@@ -18,21 +18,24 @@ package controller
 
 import (
 	"context"
+	"time"
 
-	"github.com/shurcooL/graphql"
-	"k8s.io/apimachinery/pkg/runtime"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	appspaceliftiov1beta1 "github.com/spacelift-io/spacelift-operator/api/v1beta1"
-	spaceliftclient "github.com/spacelift-io/spacelift-operator/internal/spacelift/client"
+	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
+	"github.com/spacelift-io/spacelift-operator/internal/logging"
+	spaceliftRepository "github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
 )
 
 // StackReconciler reconciles a Stack object
 type StackReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+	StackRepository          *repository.StackRepository
+	SpaceliftStackRepository spaceliftRepository.StackRepository
 }
 
 //+kubebuilder:rbac:groups=app.spacelift.io,resources=stacks,verbs=get;list;watch;create;update;patch;delete
@@ -51,32 +54,56 @@ type StackReconciler struct {
 func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	// TODO(michal): it's just an exapmle usage of a client
-	spaceliftClient, err := spaceliftclient.GetSpaceliftClient(ctx, r.Client, req.Namespace)
+	logger.Info("Reconciling Stack")
+	stack, err := r.StackRepository.Get(ctx, req.NamespacedName)
+
+	// The Run is removed, this should not happen because we filter out deletion events.
+	// This can't really hurt and makes the reconciliation logic a bit more straightforward to read
+	if err != nil && k8sErrors.IsNotFound(err) {
+		return ctrl.Result{}, nil
+	}
 	if err != nil {
+		logger.Error(err, "Unable to retrieve Stack from kube API.")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// If the run is new, then create it on spacelift and update the status
+	// TODO(michalg): Add stack update logic here if stack exists, for now we can only create a new stack
+	// TODO(michalg): What about stack deletion/desctruction?
+	if stack.IsNew() {
+		return r.handleNewStack(ctx, stack)
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *StackReconciler) handleNewStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	retStack, err := r.SpaceliftStackRepository.Get(ctx, stack)
+	logger.Info("Stack is new", "stack", stack, "retStack", retStack, "err", err)
+
+	spaceliftStack, err := r.SpaceliftStackRepository.Create(ctx, stack)
+	if err != nil {
+		logger.Error(err, "Unable to create the stack in spacelift")
+		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
+		return ctrl.Result{}, nil
+	}
+	logger.WithValues(
+		logging.StackState, stack.Status.State,
+		logging.StackId, stack.Status.Id,
+	).Info("New stack created")
+
+	// TODO(michalg): Set initial annotations when a stack is created
+
+	stack.SetStack(spaceliftStack)
+	if err := r.StackRepository.UpdateStatus(ctx, stack); err != nil {
+		if k8sErrors.IsConflict(err) {
+			logger.Info("Conflict on Stack status update, let's try again.")
+			return ctrl.Result{RequeueAfter: time.Second * 3}, nil
+		}
 		return ctrl.Result{}, err
 	}
-
-	var query struct {
-		Stack struct {
-			ID             string `graphql:"id"`
-			Administrative bool   `graphql:"administrative"`
-		} `graphql:"stack(id: $id)"`
-	}
-
-	variables := map[string]interface{}{
-		"id": graphql.ID("end-to-end-autoconfirm"),
-	}
-
-	err = spaceliftClient.Query(context.Background(), &query, variables)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	logger.Info("Succesfully fetched info for stack", "id", query.Stack.ID, "administrative", query.Stack.Administrative)
-
-	// TODO(user): your logic here
-
 	return ctrl.Result{}, nil
 }
 

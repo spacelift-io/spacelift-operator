@@ -18,6 +18,8 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -25,80 +27,93 @@ import (
 
 // StackSpec defines the desired state of Stack
 type StackSpec struct {
-	// StackName is the name of the stack, this is mandatory
-	// +kubebuilder:validation:MinLength=1
-	// TODO add kubebuilder validations
+	AdditionalProjectGlobs *[]string     `json:"additionalProjectGlobs,omitempty"`
+	Administrative         bool          `json:"administrative,omitempty"`
+	AfterApply             *[]string     `json:"afterApply,omitempty"`
+	AfterDestroy           *[]string     `json:"afterDestroy,omitempty"`
+	AfterInit              *[]string     `json:"afterInit,omitempty"`
+	AfterPerform           *[]string     `json:"afterPerform,omitempty"`
+	AfterPlan              *[]string     `json:"afterPlan,omitempty"`
+	AfterRun               *[]string     `json:"afterRun,omitempty"`
+	Autodeploy             bool          `json:"autodeploy,omitempty"`
+	Autoretry              bool          `json:"autoretry,omitempty"`
+	BeforeApply            *[]string     `json:"beforeApply,omitempty"`
+	BeforeDestroy          *[]string     `json:"beforeDestroy,omitempty"`
+	BeforeInit             *[]string     `json:"beforeInit,omitempty"`
+	BeforePerform          *[]string     `json:"beforePerform,omitempty"`
+	BeforePlan             *[]string     `json:"beforePlan,omitempty"`
+	Branch                 string        `json:"branch"`
+	Description            *string       `json:"description,,omitempty"`
+	GitHubActionDeploy     bool          `json:"githubActionDeploy,omitempty"`
+	IsDisabled             bool          `json:"isDisabled,omitempty"`
+	Labels                 *[]string     `json:"labels,omitempty"`
+	LocalPreviewEnabled    bool          `json:"localPreviewEnabled,omitempty"`
+	ManagesStateFile       bool          `json:"managesStateFile,omitempty"`
+	Name                   string        `json:"name"`
+	Namespace              *string       `json:"namespace,omitempty"`
+	ProjectRoot            *string       `json:"projectRoot,omitempty"`
+	ProtectFromDeletion    bool          `json:"protectFromDeletion,omitempty"`
+	Provider               *string       `json:"provider,omitempty"`
+	Repository             string        `json:"repository"`
+	RepositoryURL          *string       `json:"repositoryURL,omitempty"`
+	RunnerImage            *string       `json:"runnerImage,omitempty"`
+	Space                  *string       `json:"space,omitempty"`
+	TerraformVersion       *string       `json:"terraformVersion,omitempty"`
+	VCSInteragrionID       *string       `json:"vcsIntegrationId,omitempty"`
+	VendorConfig           *VendorConfig `json:"vendorConfig,omitempty"`
+	WorkerPool             *string       `json:"workerPool,omitempty"`
+}
 
-	// AdditionalProjectGlobs []string `json:"additionalProjectGlobs"`
+type VendorConfig struct {
+	Ansible        *AnsibleConfig        `json:"ansible,omitempty"`
+	CloudFormation *CloudFormationConfig `json:"cloudFormation,omitempty"`
+	Kubernetes     *KubernetesConfig     `json:"kubernetes,omitempty"`
+	Pulumi         *PulumiConfig         `json:"pulumi,omitempty"`
+	Terraform      *TerraformConfig      `json:"terraform,omitempty"`
+	Terragrunt     *TerragruntConfig     `json:"terragrunt,omitempty"`
+}
 
-	// Administrative         bool     `json:"administrative"`
-	// AfterApply             []string `json:"afterApply"`
-	// AfterDestroy           []string `json:"afterDestroy"`
-	// AfterInit              []string `json:"afterInit"`
-	// AfterPerform           []string `json:"afterPerform"`
-	// AfterPlan              []string `json:"afterPlan"`
-	// AfterRun               []string `json:"afterRun"`
-	// Autodeploy             bool     `json:"autodeploy"`
-	// Autoretry              bool     `json:"autoretry"`
-	// BeforeApply            []string `json:"beforeApply"`
-	// BeforeDestroy          []string `json:"beforeDestroy"`
-	// BeforeInit             []string `json:"beforeInit"`
-	// BeforePerform          []string `json:"beforePerform"`
-	// BeforePlan             []string `json:"beforePlan"`
-	// Branch                 string   `json:"branch"`
-	// Description            *string  `json:"description,,omitempty"`
-	// GitHubActionDeploy     bool     `json:"githubActionDeploy"`
-	// IsDisabled             bool     `json:"isDisabled"`
-	// Labels                 []string `json:"labels"`
-	// LocalPreviewEnabled    bool     `json:"localPreviewEnabled"`
-	ManagesStateFile bool `json:"managesStateFile"`
+type AnsibleConfig struct {
+	Playbook string `json:"playbook"`
+}
 
-	// +kubebuilder:validation:MinLength=1
-	Name string `json:"name"`
-	// Namespace              string   `json:"namespace"`
-	// ProjectRoot            *string  `json:"projectRoot,omitempty"`
-	// ProtectFromDeletion    bool     `json:"protectFromDeletion"`
-	// Provider               string   `json:"provider"`
-	// Repository             string   `json:"repository"`
-	// RepositoryURL          *string  `json:"repositoryURL,omitempty"`
-	// RunnerImage            *string  `json:"runnerImage,omitempty"`
-	// Space                  string   `json:"space"`
-	// TerraformVersion       *string  `json:"terraformVersion,omitempty"`
-	// VCSInteragrionID       string   `json:"vcsIntegrationId"`
-	// VendorConfig           struct {
-	// 	Ansible struct {
-	// 		Playbook string `json:"playbook"`
-	// 	} `json:"ansible,omitempty"`
-	// 	CloudFormation struct {
-	// 		EntryTemplateName string `json:"entryTemplateFile"`
-	// 		Region            string `json:"region"`
-	// 		StackName         string `json:"stackName"`
-	// 		TemplateBucket    string `json:"templateBucket"`
-	// 	} `json:"cloudFormation,omitempty"`
-	// 	Kubernetes struct {
-	// 		Namespace      string  `json:"namespace"`
-	// 		KubectlVersion *string `json:"kubectlVersion,omitempty"`
-	// 	} `json:"kubernetes,omitempty"`
-	// 	Pulumi struct {
-	// 		LoginURL  string `json:"loginURL"`
-	// 		StackName string `json:"stackName"`
-	// 	} `json:"pulumi,omitempty"`
-	// 	Terraform struct {
-	// 		UseSmartSanitization       bool    `json:"useSmartSanitization"`
-	// 		Version                    *string `json:"version,omitempty"`
-	// 		WorkflowTool               *string `json:"workflowTool,omitempty"`
-	// 		Workspace                  *string `json:"workspace,omitempty"`
-	// 		ExternalStateAccessEnabled bool    `json:"externalStateAccessEnabled"`
-	// 	} `json:"terraform,omitempty"`
-	// } `json:"vendorConfig"`
-	// WorkerPool *string `json:"workerPool,omitempty"`
+type CloudFormationConfig struct {
+	EntryTemplateFile string `json:"entryTemplateFile"`
+	Region            string `json:"region"`
+	StackName         string `json:"stackName"`
+	TemplateBucket    string `json:"templateBucket"`
+}
+
+type KubernetesConfig struct {
+	Namespace      string  `json:"namespace"`
+	KubectlVersion *string `json:"kubectlVersion,omitempty"`
+}
+
+type PulumiConfig struct {
+	LoginURL  string `json:"loginURL"`
+	StackName string `json:"stackName"`
+}
+
+type TerraformConfig struct {
+	UseSmartSanitization       bool    `json:"useSmartSanitization,omitempty"`
+	Version                    *string `json:"version,omitempty"`
+	WorkflowTool               *string `json:"workflowTool,omitempty"`
+	Workspace                  *string `json:"workspace,omitempty"`
+	ExternalStateAccessEnabled bool    `json:"externalStateAccessEnabled,omitempty"`
+}
+
+type TerragruntConfig struct {
+	TerraformVersion     string `json:"terraformVersion"`
+	TerragruntVersion    string `json:"terragruntVersion"`
+	UseRunAll            bool   `json:"useRunAll"`
+	UseSmartSanitization bool   `json:"useSmartSanitization"`
 }
 
 // StackStatus defines the observed state of Stack
 type StackStatus struct {
 	// State is the stack state
 	State string `json:"state,omitempty"`
-	Name  string `json:"name,omitempty"`
+	Id    string `json:"id,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -111,6 +126,24 @@ type Stack struct {
 
 	Spec   StackSpec   `json:"spec,omitempty"`
 	Status StackStatus `json:"status,omitempty"`
+}
+
+// IsNew return true if the resource has just been created.
+// If status.state is nil, it means that the controller does not have handled it yet, so it mean that it's a new one
+func (s *Stack) IsNew() bool {
+	return s.Status.State == ""
+}
+
+// SetStack is used to sync the k8s CRD with a spacelift stack model.
+// It basically takes care of updating all status fields
+func (s *Stack) SetStack(stack *models.Stack) {
+	if stack.Id != "" {
+		s.Status.Id = stack.Id
+	}
+
+	if stack.State != "" {
+		s.Status.State = stack.State
+	}
 }
 
 //+kubebuilder:object:root=true

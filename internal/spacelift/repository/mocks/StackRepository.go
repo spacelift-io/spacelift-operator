@@ -142,6 +142,65 @@ func (_c *StackRepository_Get_Call) RunAndReturn(run func(context.Context, *v1be
 	return _c
 }
 
+// Update provides a mock function with given fields: _a0, _a1
+func (_m *StackRepository) Update(_a0 context.Context, _a1 *v1beta1.Stack) (*models.Stack, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 *models.Stack
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack) (*models.Stack, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack) *models.Stack); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Stack)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1beta1.Stack) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// StackRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
+type StackRepository_Update_Call struct {
+	*mock.Call
+}
+
+// Update is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 *v1beta1.Stack
+func (_e *StackRepository_Expecter) Update(_a0 interface{}, _a1 interface{}) *StackRepository_Update_Call {
+	return &StackRepository_Update_Call{Call: _e.mock.On("Update", _a0, _a1)}
+}
+
+func (_c *StackRepository_Update_Call) Run(run func(_a0 context.Context, _a1 *v1beta1.Stack)) *StackRepository_Update_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*v1beta1.Stack))
+	})
+	return _c
+}
+
+func (_c *StackRepository_Update_Call) Return(_a0 *models.Stack, _a1 error) *StackRepository_Update_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StackRepository_Update_Call) RunAndReturn(run func(context.Context, *v1beta1.Stack) (*models.Stack, error)) *StackRepository_Update_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewStackRepository creates a new instance of StackRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewStackRepository(t interface {
