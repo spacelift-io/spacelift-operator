@@ -115,7 +115,6 @@ type TerragruntConfig struct {
 type StackStatus struct {
 	// State is the stack state
 	Id                 string  `json:"id,omitempty"`
-	State              string  `json:"state,omitempty"`
 	Url                string  `json:"url,omitempty"`
 	TrackedCommit      *Commit `json:"trackedCommit,omitempty"`
 	TrackedCommitSetBy *string `json:"trackedCommitSetBy,omitempty"`
@@ -145,7 +144,7 @@ type Stack struct {
 // IsNew return true if the resource has just been created.
 // If status.state is nil, it means that the controller does not have handled it yet, so it mean that it's a new one
 func (s *Stack) IsNew() bool {
-	return s.Status.State == ""
+	return s.Status.Id == ""
 }
 
 // SetStack is used to sync the k8s CRD with a spacelift stack model.
@@ -153,10 +152,6 @@ func (s *Stack) IsNew() bool {
 func (s *Stack) SetStack(stack *models.Stack) {
 	if stack.Id != "" {
 		s.Status.Id = stack.Id
-	}
-
-	if stack.State != "" {
-		s.Status.State = stack.State
 	}
 
 	if stack.Url != "" {

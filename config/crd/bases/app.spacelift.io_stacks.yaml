@@ -221,8 +221,6 @@ spec:
               id:
                 description: State is the stack state
                 type: string
-              state:
-                type: string
               trackedCommit:
                 properties:
                   authorLogin:

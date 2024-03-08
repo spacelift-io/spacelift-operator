@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -90,7 +89,6 @@ func (r *StackReconciler) handleNewStack(ctx context.Context, stack *v1beta1.Sta
 		return ctrl.Result{}, nil
 	}
 	logger.WithValues(
-		logging.StackState, stack.Status.State,
 		logging.StackId, stack.Status.Id,
 	).Info("New stack created")
 
@@ -114,13 +112,9 @@ func (r *StackReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithEventFilter(predicate.Funcs{
 			// Always handle new resource creation
 			CreateFunc: func(event.CreateEvent) bool { return true },
-			// Let's consider run immutables and only care about update on the status
-			UpdateFunc: func(e event.UpdateEvent) bool {
-				oldStack, _ := e.ObjectOld.(*v1beta1.Stack)
-				newStack, _ := e.ObjectNew.(*v1beta1.Stack)
-				return !reflect.DeepEqual(oldStack.Status, newStack.Status)
-			},
-			// We don't care about run removal
+			// Always handle resource update
+			UpdateFunc: func(e event.UpdateEvent) bool { return true },
+			// We don't care about stack removal
 			DeleteFunc: func(event.DeleteEvent) bool { return false },
 		}).
 		Complete(r)
