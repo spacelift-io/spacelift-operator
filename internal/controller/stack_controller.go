@@ -69,9 +69,7 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// If the run is new, then create it on spacelift and update the status
 	// TODO(michalg): Add stack update logic here if stack exists, for now we can only create a new stack
-	// TODO(michalg): What about stack deletion/desctruction?
 	if stack.IsNew() {
 		return r.handleNewStack(ctx, stack)
 	}

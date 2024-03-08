@@ -112,7 +112,7 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 func (r *stackRepository) Update(ctx context.Context, stack *v1beta1.Stack) (*models.Stack, error) {
 	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, stack.Namespace)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating stack")
+		return nil, errors.Wrap(err, "unable to fetch spacelift client while updating stack")
 	}
 
 	var mutation struct {
