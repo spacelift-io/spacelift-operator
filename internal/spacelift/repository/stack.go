@@ -10,7 +10,7 @@ import (
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	spaceliftclient "github.com/spacelift-io/spacelift-operator/internal/spacelift/client"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
-	"github.com/spacelift-io/spacelift-operator/internal/spacelift/structs"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/structs"
 )
 
 var (
