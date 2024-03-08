@@ -92,42 +92,42 @@ type TerraformInput struct {
 	ExternalStateAccessEnabled *graphql.Boolean `json:"externalStateAccessEnabled"`
 }
 
-func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
+func FromStackSpec(stackInput v1beta1.StackInput) StackInput {
 	ret := StackInput{
-		Administrative:      graphql.Boolean(stackSpec.Administrative),
-		Autodeploy:          graphql.Boolean(stackSpec.Autodeploy),
-		Autoretry:           graphql.Boolean(stackSpec.Autoretry),
-		Branch:              graphql.String(stackSpec.Branch),
-		GitHubActionDeploy:  graphql.Boolean(stackSpec.GitHubActionDeploy),
-		LocalPreviewEnabled: graphql.Boolean(stackSpec.LocalPreviewEnabled),
-		Name:                graphql.String(stackSpec.Name),
-		ProtectFromDeletion: graphql.Boolean(stackSpec.ProtectFromDeletion),
-		Repository:          graphql.String(stackSpec.Repository),
+		Administrative:      graphql.Boolean(stackInput.Administrative),
+		Autodeploy:          graphql.Boolean(stackInput.Autodeploy),
+		Autoretry:           graphql.Boolean(stackInput.Autoretry),
+		Branch:              graphql.String(stackInput.Branch),
+		GitHubActionDeploy:  graphql.Boolean(stackInput.GitHubActionDeploy),
+		LocalPreviewEnabled: graphql.Boolean(stackInput.LocalPreviewEnabled),
+		Name:                graphql.String(stackInput.Name),
+		ProtectFromDeletion: graphql.Boolean(stackInput.ProtectFromDeletion),
+		Repository:          graphql.String(stackInput.Repository),
 	}
 
-	ret.AddditionalProjectGlobs = getGraphQLStrings(stackSpec.AdditionalProjectGlobs)
-	ret.AfterApply = getGraphQLStrings(stackSpec.AfterApply)
-	ret.AfterDestroy = getGraphQLStrings(stackSpec.AfterDestroy)
-	ret.AfterInit = getGraphQLStrings(stackSpec.AfterInit)
-	ret.AfterPerform = getGraphQLStrings(stackSpec.AfterPerform)
-	ret.AfterPlan = getGraphQLStrings(stackSpec.AfterPlan)
-	ret.AfterRun = getGraphQLStrings(stackSpec.AfterRun)
-	ret.BeforeApply = getGraphQLStrings(stackSpec.BeforeApply)
-	ret.BeforeDestroy = getGraphQLStrings(stackSpec.BeforeDestroy)
-	ret.BeforeInit = getGraphQLStrings(stackSpec.BeforeInit)
-	ret.BeforePerform = getGraphQLStrings(stackSpec.BeforePerform)
-	ret.BeforePlan = getGraphQLStrings(stackSpec.BeforePlan)
-	ret.Description = getGraphQLString(stackSpec.Description)
-	ret.Provider = getGraphQLString(stackSpec.Provider)
-	ret.Labels = getGraphQLStrings(stackSpec.Labels)
-	ret.Space = getGraphQLString(stackSpec.Space)
-	ret.ProjectRoot = getGraphQLString(stackSpec.ProjectRoot)
+	ret.AddditionalProjectGlobs = getGraphQLStrings(stackInput.AdditionalProjectGlobs)
+	ret.AfterApply = getGraphQLStrings(stackInput.AfterApply)
+	ret.AfterDestroy = getGraphQLStrings(stackInput.AfterDestroy)
+	ret.AfterInit = getGraphQLStrings(stackInput.AfterInit)
+	ret.AfterPerform = getGraphQLStrings(stackInput.AfterPerform)
+	ret.AfterPlan = getGraphQLStrings(stackInput.AfterPlan)
+	ret.AfterRun = getGraphQLStrings(stackInput.AfterRun)
+	ret.BeforeApply = getGraphQLStrings(stackInput.BeforeApply)
+	ret.BeforeDestroy = getGraphQLStrings(stackInput.BeforeDestroy)
+	ret.BeforeInit = getGraphQLStrings(stackInput.BeforeInit)
+	ret.BeforePerform = getGraphQLStrings(stackInput.BeforePerform)
+	ret.BeforePlan = getGraphQLStrings(stackInput.BeforePlan)
+	ret.Description = getGraphQLString(stackInput.Description)
+	ret.Provider = getGraphQLString(stackInput.Provider)
+	ret.Labels = getGraphQLStrings(stackInput.Labels)
+	ret.Space = getGraphQLString(stackInput.Space)
+	ret.ProjectRoot = getGraphQLString(stackInput.ProjectRoot)
 
-	ret.RunnerImage = getGraphQLString(stackSpec.RunnerImage)
+	ret.RunnerImage = getGraphQLString(stackInput.RunnerImage)
 
-	ret.VendorConfig = getVendorConfig(stackSpec.VendorConfig)
+	ret.VendorConfig = getVendorConfig(stackInput.VendorConfig)
 
-	ret.WorkerPool = getGraphQLID(stackSpec.WorkerPool)
+	ret.WorkerPool = getGraphQLID(stackInput.WorkerPool)
 
 	return ret
 }
