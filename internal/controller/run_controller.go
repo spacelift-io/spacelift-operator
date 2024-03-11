@@ -22,6 +22,7 @@ import (
 	"time"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -37,9 +38,12 @@ import (
 
 // RunReconciler reconciles a Run object
 type RunReconciler struct {
-	RunRepository          *repository.RunRepository
-	SpaceliftRunRepository spaceliftRepository.RunRepository
-	RunWatcher             *watcher.RunWatcher
+	RunRepository            *repository.RunRepository
+	StackRepository          *repository.StackRepository
+	StackOutputRepository    *repository.StackOutputRepository
+	SpaceliftRunRepository   spaceliftRepository.RunRepository
+	SpaceliftStackRepository spaceliftRepository.StackRepository
+	RunWatcher               *watcher.RunWatcher
 }
 
 //+kubebuilder:rbac:groups=app.spacelift.io,resources=runs,verbs=get;list;watch;create;update;patch;delete
@@ -66,17 +70,40 @@ func (r *RunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// If the run is new, then create it on spacelift and update the status
-	if run.IsNew() {
-		return r.handleNewRun(ctx, run)
+	logger = logger.WithValues(logging.StackName, run.Spec.StackName)
+	log.IntoContext(ctx, logger)
+
+	// A run should always be linked to a valid stack
+	stack, err := r.StackRepository.Get(ctx, types.NamespacedName{Namespace: run.Namespace, Name: run.Spec.StackName})
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			logger.V(logging.Level4).Info("Unable to find stack for run")
+			// TODO(eliecharra): retry here maybe? When you create a stack and a run at the same time?
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		}
+		logger.Error(err, "Error fetching stack for run.")
+		return ctrl.Result{}, err
 	}
 
-	return r.handleRunUpdate(ctx, run)
+	// If the run does not have owner reference let's set it
+	if len(run.OwnerReferences) == 0 {
+		if err := r.RunRepository.SetOwner(ctx, run, stack); err != nil {
+			logger.Error(err, "Error setting owner for run run.")
+			return ctrl.Result{}, err
+		}
+	}
+
+	// If the run is new, then create it on spacelift and update the status
+	if run.IsNew() {
+		return r.handleNewRun(ctx, run, stack)
+	}
+
+	return r.handleRunUpdate(ctx, run, stack)
 }
 
-func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run) (ctrl.Result, error) {
+func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run, stack *v1beta1.Stack) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	spaceliftRun, err := r.SpaceliftRunRepository.Create(ctx, run)
+	spaceliftRun, err := r.SpaceliftRunRepository.Create(ctx, stack)
 	if err != nil {
 		logger.Error(err, "Unable to create the run in spacelift")
 		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
@@ -111,8 +138,14 @@ func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run) (ctr
 	return ctrl.Result{}, nil
 }
 
-func (r *RunReconciler) handleRunUpdate(ctx context.Context, run *v1beta1.Run) (ctrl.Result, error) {
+func (r *RunReconciler) handleRunUpdate(ctx context.Context, run *v1beta1.Run, stack *v1beta1.Stack) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+
+	logger.Info("Run updated",
+		logging.RunId, run.Status.Id,
+		logging.RunState, run.Status.State,
+		logging.StackId, run.Status.StackId,
+	)
 
 	// If a run is not terminated and not watched it probably mean that
 	// - a new run has been created
@@ -126,12 +159,34 @@ func (r *RunReconciler) handleRunUpdate(ctx context.Context, run *v1beta1.Run) (
 		return ctrl.Result{}, nil
 	}
 
-	logger.Info("Run updated",
-		logging.RunId, run.Status.Id,
-		logging.RunState, run.Status.State,
-		logging.ArgoHealth, run.Status.Argo.Health,
-	)
+	if run.Finished() {
+		return r.updateStackOutputSecret(ctx, run, stack)
+	}
 
+	return ctrl.Result{}, nil
+}
+
+func (r *RunReconciler) updateStackOutputSecret(ctx context.Context, run *v1beta1.Run, stack *v1beta1.Stack) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+	s, err := r.SpaceliftStackRepository.Get(ctx, stack)
+	if err != nil {
+		logger.Error(err, "Cannot read stack after run terminates")
+		return ctrl.Result{}, err
+	}
+	secret, err := r.StackOutputRepository.UpdateOrCreateStackOutputSecret(ctx, stack, s.Outputs)
+	if err != nil {
+		logger.Error(err, "Unable to create secret from stack output")
+		return ctrl.Result{}, err
+	}
+	logger.Info("Updated stack output secret", "secret", secret.Name)
+	run.SetHealthy()
+	if err := r.RunRepository.UpdateStatus(ctx, run); err != nil {
+		if k8sErrors.IsConflict(err) {
+			logger.Info("Conflict on Run status update, let's try again.")
+			return ctrl.Result{RequeueAfter: time.Second * 3}, nil
+		}
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 

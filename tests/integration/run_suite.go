@@ -23,7 +23,7 @@ var DefaultValidRun = v1beta1.Run{
 		Namespace:    "default",
 	},
 	Spec: v1beta1.RunSpec{
-		StackName: "foobar",
+		StackName: "test-stack",
 	},
 }
 
@@ -38,8 +38,8 @@ func (s *WithRunSuiteHelper) CreateTestRun() (*v1beta1.Run, error) {
 		"test.id": fakeRunULID,
 	}
 	s.FakeSpaceliftRunRepo.EXPECT().
-		Create(mock.Anything, mock.MatchedBy(func(r *v1beta1.Run) bool {
-			return r.ObjectMeta.Annotations["test.id"] == fakeRunULID
+		Create(mock.Anything, mock.MatchedBy(func(r *v1beta1.Stack) bool {
+			return r.Name == run.Spec.StackName
 		})).
 		Once().
 		Return(&models.Run{
@@ -67,7 +67,7 @@ func (s *WithRunSuiteHelper) AssertRunState(run *v1beta1.Run, status v1beta1.Run
 	log.Printf("Waiting for run run state: %s", status)
 	result := s.Eventually(func() bool {
 		var err error
-		refreshedRun, err = s.runRepo.Get(s.ctx, types.NamespacedName{
+		refreshedRun, err = s.RunRepo.Get(s.ctx, types.NamespacedName{
 			Namespace: run.Namespace,
 			Name:      run.Name,
 		})
@@ -79,4 +79,14 @@ func (s *WithRunSuiteHelper) AssertRunState(run *v1beta1.Run, status v1beta1.Run
 	}
 	log.Printf("Successfully asserted run state: %s", status)
 	return refreshedRun
+}
+
+func (s *WithRunSuiteHelper) WaitUntilHealthy(run *v1beta1.Run) bool {
+	return s.Eventually(func() bool {
+		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: run.Namespace, Name: run.Name}, run)
+		if err != nil {
+			return false
+		}
+		return run.Status.Argo.Health == v1beta1.ArgoHealthHealthy
+	}, DefaultTimeout, DefaultInterval)
 }

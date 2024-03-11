@@ -6,5 +6,6 @@ const (
 	RunId    = "run.id"
 	RunState = "run.state"
 
-	StackId = "stack.id"
+	StackName = "stack.name"
+	StackId   = "stack.id"
 )

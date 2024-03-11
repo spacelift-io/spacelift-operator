@@ -18,12 +18,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	kubezap "sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
-	"github.com/spacelift-io/spacelift-operator/internal/controller"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/mocks"
-	"github.com/spacelift-io/spacelift-operator/internal/spacelift/watcher"
 )
 
 const (
@@ -34,15 +33,19 @@ const (
 type IntegrationTestSuite struct {
 	suite.Suite
 
+	SetupManager func(manager.Manager)
+
 	ctx       context.Context
 	cancel    context.CancelFunc
 	k8sClient client.Client
 	testEnv   *envtest.Environment
 	Logs      *observer.ObservedLogs
 
-	FakeSpaceliftRunRepo *mocks.RunRepository
+	FakeSpaceliftRunRepo   *mocks.RunRepository
+	FakeSpaceliftStackRepo *mocks.StackRepository
 
-	runRepo *repository.RunRepository
+	RunRepo   *repository.RunRepository
+	StackRepo *repository.StackRepository
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -89,30 +92,13 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	})
 	s.Require().NoError(err)
 
-	s.runRepo = repository.NewRunRepository(mgr.GetClient())
-	s.FakeSpaceliftRunRepo = new(mocks.RunRepository)
-	w := watcher.NewRunWatcher(s.runRepo, s.FakeSpaceliftRunRepo)
-	err = (&controller.RunReconciler{
-		RunRepository:          s.runRepo,
-		SpaceliftRunRepository: s.FakeSpaceliftRunRepo,
-		RunWatcher:             w,
-	}).SetupWithManager(mgr)
-	s.Require().NoError(err)
+	s.Require().NotNil(s.SetupManager, "SetupManager should be defined")
+	s.SetupManager(mgr)
 
 	go func() {
 		err := mgr.Start(s.ctx)
 		s.Require().NoError(err)
 	}()
-}
-
-func (s *IntegrationTestSuite) SetupTest() {
-	s.FakeSpaceliftRunRepo.Test(s.T())
-}
-
-func (s *IntegrationTestSuite) TearDownTest() {
-	s.FakeSpaceliftRunRepo.AssertExpectations(s.T())
-	s.FakeSpaceliftRunRepo.Calls = nil
-	s.FakeSpaceliftRunRepo.ExpectedCalls = nil
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -123,10 +109,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 func (s *IntegrationTestSuite) Client() client.Client {
 	return s.k8sClient
-}
-
-func (s *IntegrationTestSuite) RunRepo() *repository.RunRepository {
-	return s.runRepo
 }
 
 func (s *IntegrationTestSuite) Context() context.Context {

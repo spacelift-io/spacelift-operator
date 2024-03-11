@@ -56,7 +56,8 @@ type RunStatus struct {
 	// State is the run state, see RunState for all possibles state of a run
 	State RunState `json:"state,omitempty"`
 	// Id is the run ULID on Spacelift
-	Id string `json:"id,omitempty"`
+	Id      string `json:"id,omitempty"`
+	StackId string `json:"stackId,omitempty"`
 	// Argo is a status that could be used by argo health check to sync on health
 	Argo *ArgoStatus `json:"argo,omitempty"`
 }
@@ -87,6 +88,10 @@ func (r *Run) IsTerminated() bool {
 	return found
 }
 
+func (r *Run) Finished() bool {
+	return r.Status.State == RunStateFinished
+}
+
 type RunCreated struct {
 	Id, Url string
 	State   RunState
@@ -101,12 +106,16 @@ func (r *Run) SetRun(run *models.Run) {
 	if run.State != "" {
 		r.Status.State = RunState(run.State)
 	}
+	r.Status.StackId = run.StackId
+}
+
+func (r *Run) SetHealthy() {
+	r.Status.Argo.Health = ArgoHealthHealthy
+}
+
+func (r *Run) UpdateArgoHealth() {
 	argoHealth := &ArgoStatus{
 		Health: ArgoHealthProgressing,
-	}
-	if r.Status.State == RunStateFinished ||
-		r.Status.State == RunStateSkipped {
-		argoHealth.Health = ArgoHealthHealthy
 	}
 	if r.Status.State == RunStateUnconfirmed {
 		argoHealth.Health = ArgoHealthSuspended

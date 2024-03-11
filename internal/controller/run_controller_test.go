@@ -9,22 +9,63 @@ import (
 	"github.com/stretchr/testify/suite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
+	"github.com/spacelift-io/spacelift-operator/internal/controller"
+	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/mocks"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/watcher"
 	"github.com/spacelift-io/spacelift-operator/tests/integration"
 )
 
 type RunControllerSuite struct {
 	integration.IntegrationTestSuite
 	integration.WithRunSuiteHelper
+	integration.WithStackSuiteHelper
 }
 
 func (s *RunControllerSuite) SetupSuite() {
+	s.SetupManager = func(mgr manager.Manager) {
+		stackOutputRepo := repository.NewStackOutputRepository(mgr.GetClient(), mgr.GetScheme())
+		s.RunRepo = repository.NewRunRepository(mgr.GetClient(), mgr.GetScheme())
+		s.FakeSpaceliftRunRepo = new(mocks.RunRepository)
+		s.FakeSpaceliftStackRepo = new(mocks.StackRepository)
+		s.StackRepo = repository.NewStackRepository(mgr.GetClient())
+		w := watcher.NewRunWatcher(s.RunRepo, s.FakeSpaceliftRunRepo)
+		err := (&controller.RunReconciler{
+			RunRepository:            s.RunRepo,
+			StackRepository:          s.StackRepo,
+			StackOutputRepository:    stackOutputRepo,
+			SpaceliftRunRepository:   s.FakeSpaceliftRunRepo,
+			SpaceliftStackRepository: s.FakeSpaceliftStackRepo,
+			RunWatcher:               w,
+		}).SetupWithManager(mgr)
+		s.Require().NoError(err)
+	}
 	s.IntegrationTestSuite.SetupSuite()
 	s.WithRunSuiteHelper = integration.WithRunSuiteHelper{
 		IntegrationTestSuite: &s.IntegrationTestSuite,
 	}
+	s.WithStackSuiteHelper = integration.WithStackSuiteHelper{
+		IntegrationTestSuite: &s.IntegrationTestSuite,
+	}
+}
+
+func (s *RunControllerSuite) SetupTest() {
+	s.FakeSpaceliftRunRepo.Test(s.T())
+	s.FakeSpaceliftStackRepo.Test(s.T())
+}
+
+func (s *RunControllerSuite) TearDownTest() {
+	s.FakeSpaceliftRunRepo.AssertExpectations(s.T())
+	s.FakeSpaceliftRunRepo.Calls = nil
+	s.FakeSpaceliftRunRepo.ExpectedCalls = nil
+
+	s.FakeSpaceliftStackRepo.AssertExpectations(s.T())
+	s.FakeSpaceliftStackRepo.Calls = nil
+	s.FakeSpaceliftStackRepo.ExpectedCalls = nil
 }
 
 func (s *RunControllerSuite) TestRunCreation_InvalidSpec() {
@@ -64,13 +105,17 @@ func (s *RunControllerSuite) TestRunCreation_UnableToCreateOnSpacelift() {
 	s.FakeSpaceliftRunRepo.EXPECT().Create(mock.Anything, mock.Anything).Once().
 		Return(nil, fmt.Errorf("unable to create resource on spacelift"))
 
+	stack, err := s.CreateTestStack()
+	s.Require().NoError(err)
+	defer s.DeleteStack(stack)
+
 	s.Logs.TakeAll()
-	err := s.Client().Create(s.Context(), &run)
+	err = s.Client().Create(s.Context(), &run)
 	s.Require().NoError(err)
 
 	// Make sure we don't update the run ID and state
 	s.Require().Never(func() bool {
-		run, err := s.RunRepo().Get(s.Context(), types.NamespacedName{
+		run, err := s.RunRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: run.Namespace,
 			Name:      run.Name,
 		})
@@ -115,6 +160,19 @@ func (s *RunControllerSuite) TestRunCreation_OK() {
 			State: string(v1beta1.RunStateFinished),
 		}, nil)
 
+	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Return(&models.Stack{
+		Outputs: []models.StackOutput{
+			{
+				Id:    "STACK_OUTPUT",
+				Value: "output-value",
+			},
+		},
+	}, nil)
+
+	stack, err := s.CreateTestStack()
+	s.Require().NoError(err)
+	defer s.DeleteStack(stack)
+
 	run, err := s.CreateTestRun()
 	s.Require().NoError(err)
 
@@ -131,7 +189,14 @@ func (s *RunControllerSuite) TestRunCreation_OK() {
 
 	// Assert that the state has been changed by the watcher to finished
 	run = s.AssertRunState(run, v1beta1.RunStateFinished)
+	s.WaitUntilHealthy(run)
 	s.Assert().Equal(v1beta1.ArgoHealthHealthy, run.Status.Argo.Health)
+
+	secrets, err := s.GetStackOutput(stack)
+	s.Require().NoError(err)
+	s.Assert().Equal(map[string][]byte{
+		"STACK_OUTPUT": []byte("output-value"),
+	}, secrets.Data)
 }
 
 func (s *RunControllerSuite) TestRunCreation_OK_WithErrorDuringWatch() {
@@ -153,6 +218,12 @@ func (s *RunControllerSuite) TestRunCreation_OK_WithErrorDuringWatch() {
 			State: string(v1beta1.RunStateFinished),
 		}, nil).NotBefore(errCall)
 
+	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Return(&models.Stack{Outputs: []models.StackOutput{}}, nil)
+
+	stack, err := s.CreateTestStack()
+	s.Require().NoError(err)
+	defer s.DeleteStack(stack)
+
 	s.Logs.TakeAll()
 	run, err := s.CreateTestRun()
 	s.Require().NoError(err)
@@ -166,7 +237,7 @@ func (s *RunControllerSuite) TestRunCreation_OK_WithErrorDuringWatch() {
 	// So asserting that the status is not changed during 5 seconds allows us to know that we are
 	// Using the error sleep interval.
 	s.Never(func() bool {
-		run, err := s.RunRepo().Get(s.Context(), types.NamespacedName{
+		run, err := s.RunRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: run.Namespace,
 			Name:      run.Name,
 		})

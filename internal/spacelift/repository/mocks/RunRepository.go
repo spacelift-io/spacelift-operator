@@ -25,7 +25,7 @@ func (_m *RunRepository) EXPECT() *RunRepository_Expecter {
 }
 
 // Create provides a mock function with given fields: _a0, _a1
-func (_m *RunRepository) Create(_a0 context.Context, _a1 *v1beta1.Run) (*models.Run, error) {
+func (_m *RunRepository) Create(_a0 context.Context, _a1 *v1beta1.Stack) (*models.Run, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -34,10 +34,10 @@ func (_m *RunRepository) Create(_a0 context.Context, _a1 *v1beta1.Run) (*models.
 
 	var r0 *models.Run
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Run) (*models.Run, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack) (*models.Run, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Run) *models.Run); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack) *models.Run); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -45,7 +45,7 @@ func (_m *RunRepository) Create(_a0 context.Context, _a1 *v1beta1.Run) (*models.
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *v1beta1.Run) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *v1beta1.Stack) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -61,14 +61,14 @@ type RunRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - _a0 context.Context
-//   - _a1 *v1beta1.Run
+//   - _a1 *v1beta1.Stack
 func (_e *RunRepository_Expecter) Create(_a0 interface{}, _a1 interface{}) *RunRepository_Create_Call {
 	return &RunRepository_Create_Call{Call: _e.mock.On("Create", _a0, _a1)}
 }
 
-func (_c *RunRepository_Create_Call) Run(run func(_a0 context.Context, _a1 *v1beta1.Run)) *RunRepository_Create_Call {
+func (_c *RunRepository_Create_Call) Run(run func(_a0 context.Context, _a1 *v1beta1.Stack)) *RunRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*v1beta1.Run))
+		run(args[0].(context.Context), args[1].(*v1beta1.Stack))
 	})
 	return _c
 }
@@ -78,7 +78,7 @@ func (_c *RunRepository_Create_Call) Return(_a0 *models.Run, _a1 error) *RunRepo
 	return _c
 }
 
-func (_c *RunRepository_Create_Call) RunAndReturn(run func(context.Context, *v1beta1.Run) (*models.Run, error)) *RunRepository_Create_Call {
+func (_c *RunRepository_Create_Call) RunAndReturn(run func(context.Context, *v1beta1.Stack) (*models.Run, error)) *RunRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
