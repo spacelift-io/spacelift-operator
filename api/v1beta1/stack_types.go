@@ -65,6 +65,8 @@ type StackInput struct {
 	VendorConfig           *VendorConfig `json:"vendorConfig,omitempty"`
 	WorkerPool             *string       `json:"workerPool,omitempty"`
 
+	AWSIntegration *AWSIntegration `json:"awsIntegration,omitempty"`
+
 	// In our API managesStateFile is not part of StackInput
 	ManagesStateFile bool `json:"managesStateFile,omitempty"`
 }
@@ -175,6 +177,12 @@ func (s *Stack) SetStack(stack *models.Stack) {
 	if stack.TrackedCommitSetBy != nil {
 		s.Status.TrackedCommitSetBy = stack.TrackedCommitSetBy
 	}
+}
+
+type AWSIntegration struct {
+	Id    string `json:"id"`
+	Read  bool   `json:"read"`
+	Write bool   `json:"write"`
 }
 
 //+kubebuilder:object:root=true

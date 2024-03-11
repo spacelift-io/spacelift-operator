@@ -59,6 +59,13 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 	}
 	url := c.URL("/stack/%s", stackCreateMutation.StackCreate.ID)
 
+	stack.Status.Id = stackCreateMutation.StackCreate.ID
+	if stack.Spec.Settings.AWSIntegration != nil {
+		if err := r.attachAWSIntegration(ctx, stack); err != nil {
+			return nil, errors.Wrap(err, "unable to attach AWS integration to stack")
+		}
+	}
+
 	trackedCommit, trackedCommitSetBy, err := r.setTrackedCommit(ctx, c, stackCreateMutation.StackCreate.ID, stack.Spec.CommitSHA)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to set tracked commit on stack")
@@ -71,6 +78,29 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 		TrackedCommit:      trackedCommit,
 		TrackedCommitSetBy: trackedCommitSetBy,
 	}, nil
+}
+
+func (r *stackRepository) attachAWSIntegration(ctx context.Context, stack *v1beta1.Stack) error {
+	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, stack.Namespace)
+	if err != nil {
+		return errors.Wrap(err, "unable to fetch spacelift client while creating stack")
+	}
+	var awsIntegrationAttachMutation struct {
+		AWSIntegrationAttach struct {
+			Id string `graphql:"id"`
+		} `graphql:"awsIntegrationAttach(id: $id, stack: $stack, read: $read, write: $write)"`
+	}
+	awsIntegrationAttachVars := map[string]any{
+		"id":    stack.Spec.Settings.AWSIntegration.Id,
+		"stack": stack.Status.Id,
+		"read":  graphql.Boolean(stack.Spec.Settings.AWSIntegration.Read),
+		"write": graphql.Boolean(stack.Spec.Settings.AWSIntegration.Write),
+	}
+	if err := c.Mutate(ctx, &awsIntegrationAttachMutation, awsIntegrationAttachVars); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *stackRepository) Update(ctx context.Context, stack *v1beta1.Stack) (*models.Stack, error) {
