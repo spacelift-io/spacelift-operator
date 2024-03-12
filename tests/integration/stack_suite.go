@@ -33,7 +33,8 @@ var DefaultValidStack = v1beta1.Stack{
 		},
 	},
 	Status: v1beta1.StackStatus{
-		Id: "test-stack",
+		Id:    "test-stack",
+		Ready: true,
 	},
 }
 

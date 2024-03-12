@@ -55,6 +55,7 @@ var terminalStates = map[RunState]interface{}{
 type RunStatus struct {
 	// State is the run state, see RunState for all possibles state of a run
 	State RunState `json:"state,omitempty"`
+	Ready bool     `json:"ready"`
 	// Id is the run ULID on Spacelift
 	Id      string `json:"id,omitempty"`
 	StackId string `json:"stackId,omitempty"`
@@ -111,6 +112,7 @@ func (r *Run) SetRun(run *models.Run) {
 
 func (r *Run) SetHealthy() {
 	r.Status.Argo.Health = ArgoHealthHealthy
+	r.Status.Ready = true
 }
 
 func (r *Run) UpdateArgoHealth() {

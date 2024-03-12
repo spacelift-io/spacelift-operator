@@ -123,6 +123,7 @@ type StackStatus struct {
 	Url                string  `json:"url,omitempty"`
 	TrackedCommit      *Commit `json:"trackedCommit,omitempty"`
 	TrackedCommitSetBy *string `json:"trackedCommitSetBy,omitempty"`
+	Ready              bool    `json:"ready"`
 }
 
 type Commit struct {
@@ -152,6 +153,10 @@ func (s *Stack) IsNew() bool {
 	return s.Status.Id == ""
 }
 
+func (s *Stack) Ready() bool {
+	return s.Status.Ready
+}
+
 // SetStack is used to sync the k8s CRD with a spacelift stack model.
 // It basically takes care of updating all status fields
 func (s *Stack) SetStack(stack *models.Stack) {
@@ -172,6 +177,7 @@ func (s *Stack) SetStack(stack *models.Stack) {
 			Timestamp:   stack.TrackedCommit.Timestamp,
 			URL:         stack.TrackedCommit.URL,
 		}
+		s.Status.Ready = s.Status.TrackedCommit.Hash == s.Spec.CommitSHA
 	}
 
 	if stack.TrackedCommitSetBy != nil {
