@@ -178,3 +178,13 @@ gogen: install-go-tools
 .PHONY: install-go-tools ## Install dev tools
 install-go-tools:
 	go generate -tags tools
+
+.PHONY: controller-manifests
+controller-manifests: manifests kustomize ## Generates the manifests required to deploy the controller to a cluster.
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	mkdir -p build/manifests
+	$(KUSTOMIZE) build config/default > build/manifests/manifests.yaml
+	# kustomize edit set image edits the kustomization.yaml file, but this is only needed in
+	# order to build the manifests. Once it's done we need to reset the file, otherwise GoReleaser
+	# will complain about a dirty git state if trying to release.
+	git checkout -q config/manager/kustomization.yaml
