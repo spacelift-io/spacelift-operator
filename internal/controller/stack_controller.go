@@ -42,6 +42,7 @@ type StackReconciler struct {
 //+kubebuilder:rbac:groups=app.spacelift.io,resources=stacks,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=app.spacelift.io,resources=stacks/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=app.spacelift.io,resources=stacks/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=create;delete;get;list;patch;update;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
