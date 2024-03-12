@@ -233,6 +233,17 @@ spec:
           status:
             description: StackStatus defines the observed state of Stack
             properties:
+              argo:
+                description: Argo is a status that could be used by argo health check
+                  to sync on health
+                properties:
+                  health:
+                    description: ArgoHealth is a string type to represent the argo
+                      health of a resource More info on the argo doc here https://argo-cd.readthedocs.io/en/stable/operator-manual/health/
+                    type: string
+                required:
+                - health
+                type: object
               id:
                 description: State is the stack state
                 type: string

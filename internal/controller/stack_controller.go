@@ -70,7 +70,6 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// TODO(michalg): Add stack update logic here if stack exists, for now we can only create a new stack
 	if stack.IsNew() {
 		return r.handleCreateOrUpdateStack(ctx, stack)
 	}
@@ -111,7 +110,7 @@ func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.
 	}
 
 	logger.WithValues(
-		logging.StackId, stack.Status.Id,
+		logging.StackId, spaceliftStack.Id,
 	).Info("Stack updated")
 
 	return r.updateK8sStackCRD(ctx, stack, *spaceliftStack)
@@ -133,7 +132,7 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 	}
 
 	logger.WithValues(
-		logging.StackId, stack.Status.Id,
+		logging.StackId, spaceliftStack.Id,
 	).Info("Stack created")
 
 	return r.updateK8sStackCRD(ctx, stack, *spaceliftStack)
@@ -146,7 +145,9 @@ func (r *StackReconciler) updateK8sStackCRD(ctx context.Context, stack *v1beta1.
 	if stack.Annotations == nil {
 		stack.Annotations = make(map[string]string, 1)
 	}
+
 	stack.Annotations[v1beta1.ArgoExternalLink] = spaceliftStack.Url
+
 	// Updating annotations will not trigger another reconciliation loop
 	if err := r.StackRepository.Update(ctx, stack); err != nil {
 		if k8sErrors.IsConflict(err) {
@@ -164,6 +165,7 @@ func (r *StackReconciler) updateK8sStackCRD(ctx context.Context, stack *v1beta1.
 		}
 		return ctrl.Result{}, err
 	}
+
 	return ctrl.Result{}, nil
 }
 

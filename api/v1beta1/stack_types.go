@@ -124,6 +124,8 @@ type StackStatus struct {
 	TrackedCommit      *Commit `json:"trackedCommit,omitempty"`
 	TrackedCommitSetBy *string `json:"trackedCommitSetBy,omitempty"`
 	Ready              bool    `json:"ready"`
+	// Argo is a status that could be used by argo health check to sync on health
+	Argo *ArgoStatus `json:"argo,omitempty"`
 }
 
 type Commit struct {
