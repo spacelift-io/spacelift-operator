@@ -75,6 +75,19 @@ spec:
                     type: boolean
                   autoretry:
                     type: boolean
+                  awsIntegration:
+                    properties:
+                      id:
+                        type: string
+                      read:
+                        type: boolean
+                      write:
+                        type: boolean
+                    required:
+                    - id
+                    - read
+                    - write
+                    type: object
                   beforeApply:
                     items:
                       type: string
