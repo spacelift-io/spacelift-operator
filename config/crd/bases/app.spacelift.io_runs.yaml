@@ -66,6 +66,8 @@ spec:
               id:
                 description: Id is the run ULID on Spacelift
                 type: string
+              stackId:
+                type: string
               state:
                 description: State is the run state, see RunState for all possibles
                   state of a run

@@ -4,8 +4,14 @@ type Stack struct {
 	Id                 string
 	State              string
 	Url                string
+	Outputs            []StackOutput
 	TrackedCommit      *Commit
 	TrackedCommitSetBy *string
+}
+
+type StackOutput struct {
+	Id    string
+	Value string
 }
 
 type Commit struct {

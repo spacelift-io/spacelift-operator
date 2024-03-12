@@ -14,7 +14,7 @@ import (
 
 //go:generate mockery --with-expecter --name RunRepository
 type RunRepository interface {
-	Create(context.Context, *v1beta1.Run) (*models.Run, error)
+	Create(context.Context, *v1beta1.Stack) (*models.Run, error)
 	Get(context.Context, *v1beta1.Run) (*models.Run, error)
 }
 
@@ -29,8 +29,8 @@ func NewRunRepository(client client.Client) *runRepository {
 type CreateRunQuery struct {
 }
 
-func (r *runRepository) Create(ctx context.Context, run *v1beta1.Run) (*models.Run, error) {
-	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, run.Namespace)
+func (r *runRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*models.Run, error) {
+	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, stack.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating run")
 	}
@@ -41,16 +41,17 @@ func (r *runRepository) Create(ctx context.Context, run *v1beta1.Run) (*models.R
 		} `graphql:"runTrigger(stack: $stack)"`
 	}
 	vars := map[string]any{
-		"stack": graphql.ID(run.Spec.StackName),
+		"stack": graphql.ID(stack.Status.Id),
 	}
 	if err := c.Mutate(ctx, &mutation, vars); err != nil {
 		return nil, errors.Wrap(err, "unable to create run")
 	}
-	url := c.URL("/stack/%s/run/%s", run.Spec.StackName, mutation.RunTrigger.ID)
+	url := c.URL("/stack/%s/run/%s", stack.Status.Id, mutation.RunTrigger.ID)
 	return &models.Run{
-		Id:    mutation.RunTrigger.ID,
-		State: mutation.RunTrigger.State,
-		Url:   url,
+		Id:      mutation.RunTrigger.ID,
+		State:   mutation.RunTrigger.State,
+		Url:     url,
+		StackId: stack.Status.Id,
 	}, nil
 }
 
@@ -67,13 +68,14 @@ func (r *runRepository) Get(ctx context.Context, run *v1beta1.Run) (*models.Run,
 		} `graphql:"stack(id: $stackId)"`
 	}
 	vars := map[string]any{
-		"stackId": graphql.ID(run.Spec.StackName),
+		"stackId": graphql.ID(run.Status.StackId),
 		"runId":   graphql.ID(run.Status.Id),
 	}
 	if err := c.Query(ctx, &query, vars); err != nil {
 		return nil, errors.Wrap(err, "unable to get run")
 	}
 	return &models.Run{
-		State: query.Stack.Run.State,
+		State:   query.Stack.Run.State,
+		StackId: run.Status.StackId,
 	}, nil
 }

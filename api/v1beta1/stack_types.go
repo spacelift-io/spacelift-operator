@@ -24,14 +24,15 @@ import (
 
 // StackSpec defines the desired state of Stack
 type StackSpec struct {
-	Name      string     `json:"name"`
-	Settings  StackInput `json:"settings"`
-	CommitSHA *string    `json:"commitSHA,omitempty"`
+	Name     string     `json:"name"`
+	Settings StackInput `json:"settings"`
+	// +kubebuilder:validation:MinLength=1
+	CommitSHA string `json:"commitSHA"`
 }
 
 type StackInput struct {
 	AdditionalProjectGlobs *[]string     `json:"additionalProjectGlobs,omitempty"`
-	Administrative         bool          `json:"administrative,omitempty"`
+	Administrative         bool          `json:"administrative"`
 	AfterApply             *[]string     `json:"afterApply,omitempty"`
 	AfterDestroy           *[]string     `json:"afterDestroy,omitempty"`
 	AfterInit              *[]string     `json:"afterInit,omitempty"`

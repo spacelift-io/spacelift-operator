@@ -59,16 +59,7 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 	}
 	url := c.URL("/stack/%s", stackCreateMutation.StackCreate.ID)
 
-	// Commit not specified in the spec
-	if stack.Spec.CommitSHA == nil {
-		return &models.Stack{
-			Id:    stackCreateMutation.StackCreate.ID,
-			State: stackCreateMutation.StackCreate.State,
-			Url:   url,
-		}, nil
-	}
-
-	trackedCommit, trackedCommitSetBy, err := r.setTrackedCommit(ctx, c, stackCreateMutation.StackCreate.ID, *stack.Spec.CommitSHA)
+	trackedCommit, trackedCommitSetBy, err := r.setTrackedCommit(ctx, c, stackCreateMutation.StackCreate.ID, stack.Spec.CommitSHA)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to set tracked commit on stack")
 	}
@@ -121,8 +112,11 @@ func (r *stackRepository) Get(ctx context.Context, stack *v1beta1.Stack) (*model
 	}
 	var query struct {
 		Stack *struct {
-			Id    string `graphql:"id"`
-			State string `graphql:"state"`
+			Id      string `graphql:"id"`
+			Outputs []struct {
+				Id    string `graphql:"id"`
+				Value string `graphql:"value"`
+			} `graphql:"outputs"`
 		} `graphql:"stack(id: $stackId)"`
 	}
 	vars := map[string]any{
@@ -136,10 +130,19 @@ func (r *stackRepository) Get(ctx context.Context, stack *v1beta1.Stack) (*model
 		return nil, ErrStackNotFound
 	}
 
-	return &models.Stack{
-		Id:    query.Stack.Id,
-		State: query.Stack.State,
-	}, nil
+	s := &models.Stack{
+		Id:      query.Stack.Id,
+		Outputs: make([]models.StackOutput, 0, len(query.Stack.Outputs)),
+	}
+
+	for _, output := range query.Stack.Outputs {
+		s.Outputs = append(s.Outputs, models.StackOutput{
+			Id:    output.Id,
+			Value: output.Value,
+		})
+	}
+
+	return s, nil
 }
 
 func (r *stackRepository) setTrackedCommit(ctx context.Context, c spaceliftclient.Client, stackID, commitSHA string) (*models.Commit, *string, error) {

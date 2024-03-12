@@ -35,6 +35,7 @@ spec:
             description: StackSpec defines the desired state of Stack
             properties:
               commitSHA:
+                minLength: 1
                 type: string
               name:
                 type: string
@@ -208,10 +209,12 @@ spec:
                   workerPool:
                     type: string
                 required:
+                - administrative
                 - branch
                 - repository
                 type: object
             required:
+            - commitSHA
             - name
             - settings
             type: object
