@@ -237,6 +237,8 @@ spec:
               id:
                 description: State is the stack state
                 type: string
+              ready:
+                type: boolean
               trackedCommit:
                 properties:
                   authorLogin:
@@ -261,6 +263,8 @@ spec:
                 type: string
               url:
                 type: string
+            required:
+            - ready
             type: object
         type: object
     served: true

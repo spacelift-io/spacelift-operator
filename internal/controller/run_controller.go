@@ -78,7 +78,6 @@ func (r *RunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			logger.V(logging.Level4).Info("Unable to find stack for run")
-			// TODO(eliecharra): retry here maybe? When you create a stack and a run at the same time?
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 		logger.Error(err, "Error fetching stack for run.")
@@ -91,6 +90,11 @@ func (r *RunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 			logger.Error(err, "Error setting owner for run run.")
 			return ctrl.Result{}, err
 		}
+	}
+
+	if !stack.Ready() {
+		logger.Info("Stack is not ready, will retry in 3 seconds")
+		return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 	}
 
 	// If the run is new, then create it on spacelift and update the status
