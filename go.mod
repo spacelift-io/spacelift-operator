@@ -5,13 +5,16 @@ go 1.21
 toolchain go1.21.4
 
 require (
+	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.16.0
+	github.com/gosimple/slug v1.14.0
 	github.com/nwidger/jsoncolor v0.3.2
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/shurcooL/graphql v0.0.0-20230722043721-ed46e5a46466
 	github.com/spacelift-io/spacectl v0.30.0
 	github.com/stretchr/testify v1.8.4
+	github.com/tmdvs/Go-Emoji-Utils v1.1.0
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.28.0
 	k8s.io/apimachinery v0.28.0
@@ -22,7 +25,6 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -39,6 +41,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

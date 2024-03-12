@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	"github.com/pkg/errors"
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/logging"
@@ -70,17 +71,55 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	// TODO(michalg): Add stack update logic here if stack exists, for now we can only create a new stack
 	if stack.IsNew() {
-		return r.handleNewStack(ctx, stack)
+		return r.handleCreateOrUpdateStack(ctx, stack)
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *StackReconciler) handleNewStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
+func (r *StackReconciler) handleCreateOrUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
 	retStack, err := r.SpaceliftStackRepository.Get(ctx, stack)
 	logger.Info("Stack is new", "stack", stack, "retStack", retStack, "err", err)
+
+	if err != nil {
+		if err == spaceliftRepository.ErrStackNotFound {
+			return r.handleCreateStack(ctx, stack)
+		}
+		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
+	}
+
+	return r.handleUpdateStack(ctx, stack)
+
+}
+
+func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	spaceliftStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
+	if err != nil {
+		logger.Error(err, "Unable to update the stack in spacelift")
+		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
+		return ctrl.Result{}, nil
+	}
+	logger.WithValues(
+		logging.StackId, stack.Status.Id,
+	).Info("Stack updated")
+
+	stack.SetStack(spaceliftStack)
+	if err := r.StackRepository.UpdateStatus(ctx, stack); err != nil {
+		if k8sErrors.IsConflict(err) {
+			logger.Info("Conflict on Stack status update, let's try again.")
+			return ctrl.Result{RequeueAfter: time.Second * 3}, nil
+		}
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{}, nil
+}
+
+func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
 
 	spaceliftStack, err := r.SpaceliftStackRepository.Create(ctx, stack)
 	if err != nil {
@@ -90,7 +129,7 @@ func (r *StackReconciler) handleNewStack(ctx context.Context, stack *v1beta1.Sta
 	}
 	logger.WithValues(
 		logging.StackId, stack.Status.Id,
-	).Info("New stack created")
+	).Info("Stack created")
 
 	// TODO(michalg): Set initial annotations when a stack is created
 
