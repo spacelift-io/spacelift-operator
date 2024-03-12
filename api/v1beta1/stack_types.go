@@ -159,7 +159,7 @@ func (s *Stack) Ready() bool {
 
 // SetStack is used to sync the k8s CRD with a spacelift stack model.
 // It basically takes care of updating all status fields
-func (s *Stack) SetStack(stack *models.Stack) {
+func (s *Stack) SetStack(stack models.Stack) {
 	if stack.Id != "" {
 		s.Status.Id = stack.Id
 	}

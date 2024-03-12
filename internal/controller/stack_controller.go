@@ -31,6 +31,7 @@ import (
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/logging"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 	spaceliftRepository "github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
 )
 
@@ -103,19 +104,17 @@ func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.
 		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
 	}
+
+	// just being defensive here, this should never happen
+	if spaceliftStack == nil {
+		return ctrl.Result{}, errors.New("returned spacelift stack is nil when updating stack in spacelift")
+	}
+
 	logger.WithValues(
 		logging.StackId, stack.Status.Id,
 	).Info("Stack updated")
 
-	stack.SetStack(spaceliftStack)
-	if err := r.StackRepository.UpdateStatus(ctx, stack); err != nil {
-		if k8sErrors.IsConflict(err) {
-			logger.Info("Conflict on Stack status update, let's try again.")
-			return ctrl.Result{RequeueAfter: time.Second * 3}, nil
-		}
-		return ctrl.Result{}, err
-	}
-	return ctrl.Result{}, nil
+	return r.updateK8sStackCRD(ctx, stack, *spaceliftStack)
 }
 
 func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
@@ -127,11 +126,35 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
 	}
+
+	// just being defensive here, this should never happen
+	if spaceliftStack == nil {
+		return ctrl.Result{}, errors.New("returned spacelift stack is nil when creating stack in spacelift")
+	}
+
 	logger.WithValues(
 		logging.StackId, stack.Status.Id,
 	).Info("Stack created")
 
-	// TODO(michalg): Set initial annotations when a stack is created
+	return r.updateK8sStackCRD(ctx, stack, *spaceliftStack)
+}
+
+func (r *StackReconciler) updateK8sStackCRD(ctx context.Context, stack *v1beta1.Stack, spaceliftStack models.Stack) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	// Set initial annotations when stack is created
+	if stack.Annotations == nil {
+		stack.Annotations = make(map[string]string, 1)
+	}
+	stack.Annotations[v1beta1.ArgoExternalLink] = spaceliftStack.Url
+	// Updating annotations will not trigger another reconciliation loop
+	if err := r.StackRepository.Update(ctx, stack); err != nil {
+		if k8sErrors.IsConflict(err) {
+			logger.Info("Conflict on Stack update, let's try again.")
+			return ctrl.Result{RequeueAfter: time.Second * 3}, nil
+		}
+		return ctrl.Result{}, err
+	}
 
 	stack.SetStack(spaceliftStack)
 	if err := r.StackRepository.UpdateStatus(ctx, stack); err != nil {
