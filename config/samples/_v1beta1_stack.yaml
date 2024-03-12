@@ -11,7 +11,7 @@ metadata:
 spec:
   name: spacelift-operator-stack
   settings:
-    administrative: true
+    administrative: false
     branch: main
     repository: empty
   commitSHA: 8fd7048876cdcc4e698d35f89dd816f705e175f7

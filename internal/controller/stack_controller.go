@@ -74,7 +74,7 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return r.handleCreateOrUpdateStack(ctx, stack)
 	}
 
-	return ctrl.Result{}, nil
+	return r.handleUpdateStack(ctx, stack)
 }
 
 func (r *StackReconciler) handleCreateOrUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
