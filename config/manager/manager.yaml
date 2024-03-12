@@ -56,7 +56,7 @@ spec:
           type: RuntimeDefault
       containers:
       - command:
-        - /manager
+        - /spacelift-operator
         args:
         - --leader-elect
         image: controller:latest
