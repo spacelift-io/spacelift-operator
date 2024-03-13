@@ -70,8 +70,6 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	r.StackRepository.Update(ctx, stack)
-
 	retStack, err := r.SpaceliftStackRepository.Get(ctx, stack)
 	if err != nil && err != spaceliftRepository.ErrStackNotFound {
 		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
