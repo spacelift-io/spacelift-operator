@@ -98,7 +98,7 @@ func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.
 		logging.StackId, spaceliftUpdatedStack.Id,
 	).Info("Stack updated")
 
-	return r.updateK8sStackCRD(ctx, stack, *spaceliftUpdatedStack)
+	return r.updateStackStatus(ctx, stack, *spaceliftUpdatedStack)
 }
 
 func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
@@ -131,10 +131,10 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 		return ctrl.Result{}, err
 	}
 
-	return r.updateK8sStackCRD(ctx, stack, *spaceliftStack)
+	return r.updateStackStatus(ctx, stack, *spaceliftStack)
 }
 
-func (r *StackReconciler) updateK8sStackCRD(ctx context.Context, stack *v1beta1.Stack, spaceliftStack models.Stack) (ctrl.Result, error) {
+func (r *StackReconciler) updateStackStatus(ctx context.Context, stack *v1beta1.Stack, spaceliftStack models.Stack) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
 	stack.SetStack(spaceliftStack)
