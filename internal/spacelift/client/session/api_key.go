@@ -16,7 +16,7 @@ func FromAPIKey(ctx context.Context, client *http.Client, endpoint, keyID, keySe
 		apiToken: apiToken{
 			client:   client,
 			endpoint: endpoint,
-			timer:    time.Now,
+			now:      time.Now,
 		},
 		keyID:     keyID,
 		keySecret: keySecret,

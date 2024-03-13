@@ -20,7 +20,7 @@ type apiToken struct {
 	jwt             string
 	tokenMutex      sync.RWMutex
 	tokenValidUntil time.Time
-	timer           func() time.Time
+	now             func() time.Time
 }
 
 func (a *apiToken) BearerToken(ctx context.Context) (string, error) {
@@ -38,7 +38,7 @@ func (a *apiToken) isFresh() bool {
 	a.tokenMutex.RLock()
 	defer a.tokenMutex.RUnlock()
 
-	return a.timer().Add(timePadding).Before(a.tokenValidUntil)
+	return a.now().Add(timePadding).Before(a.tokenValidUntil)
 }
 
 func (a *apiToken) mutate(ctx context.Context, m interface{}, variables map[string]interface{}) error {
