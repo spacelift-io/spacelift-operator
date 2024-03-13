@@ -115,12 +115,6 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 		logging.StackId, spaceliftStack.Id,
 	).Info("Stack created")
 
-	return r.updateK8sStackCRD(ctx, stack, *spaceliftStack)
-}
-
-func (r *StackReconciler) updateK8sStackCRD(ctx context.Context, stack *v1beta1.Stack, spaceliftStack models.Stack) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
-
 	// Set initial annotations when stack is created
 	if stack.Annotations == nil {
 		stack.Annotations = make(map[string]string, 1)
@@ -136,6 +130,12 @@ func (r *StackReconciler) updateK8sStackCRD(ctx context.Context, stack *v1beta1.
 		}
 		return ctrl.Result{}, err
 	}
+
+	return r.updateK8sStackCRD(ctx, stack, *spaceliftStack)
+}
+
+func (r *StackReconciler) updateK8sStackCRD(ctx context.Context, stack *v1beta1.Stack, spaceliftStack models.Stack) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
 
 	stack.SetStack(spaceliftStack)
 	if err := r.StackRepository.UpdateStatus(ctx, stack); err != nil {
