@@ -95,11 +95,6 @@ func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.
 		return ctrl.Result{}, nil
 	}
 
-	// just being defensive here, this should never happen
-	if spaceliftUpdatedStack == nil {
-		return ctrl.Result{}, errors.New("returned spacelift stack is nil when updating stack in spacelift")
-	}
-
 	logger.WithValues(
 		logging.StackId, spaceliftUpdatedStack.Id,
 	).Info("Stack updated")
@@ -115,11 +110,6 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 		logger.Error(err, "Unable to create the stack in spacelift")
 		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
-	}
-
-	// just being defensive here, this should never happen
-	if spaceliftStack == nil {
-		return ctrl.Result{}, errors.New("returned spacelift stack is nil when creating stack in spacelift")
 	}
 
 	logger.WithValues(
