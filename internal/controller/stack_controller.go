@@ -70,34 +70,27 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if stack.IsNew() {
-		return r.handleCreateOrUpdateStack(ctx, stack)
-	}
-
-	return r.handleUpdateStack(ctx, stack)
-}
-
-func (r *StackReconciler) handleCreateOrUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	r.StackRepository.Update(ctx, stack)
 
 	retStack, err := r.SpaceliftStackRepository.Get(ctx, stack)
-	logger.Info("Stack is new", "stack", stack, "retStack", retStack, "err", err)
-
-	if err != nil {
-		if err == spaceliftRepository.ErrStackNotFound {
-			return r.handleCreateStack(ctx, stack)
-		}
+	if err != nil && err != spaceliftRepository.ErrStackNotFound {
 		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
 	}
 
-	return r.handleUpdateStack(ctx, stack)
+	// Stack exists in Spacelift
+	if err == nil && retStack != nil {
+		// TODO(michalg): compare retStack with stack spec to check if there are actual changes to be made
+		return r.handleUpdateStack(ctx, stack)
+	}
 
+	// Stack does not exist in Spacelift, let's create it
+	return r.handleCreateStack(ctx, stack)
 }
 
 func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	spaceliftStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
+	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
 	if err != nil {
 		logger.Error(err, "Unable to update the stack in spacelift")
 		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
@@ -105,15 +98,15 @@ func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.
 	}
 
 	// just being defensive here, this should never happen
-	if spaceliftStack == nil {
+	if spaceliftUpdatedStack == nil {
 		return ctrl.Result{}, errors.New("returned spacelift stack is nil when updating stack in spacelift")
 	}
 
 	logger.WithValues(
-		logging.StackId, spaceliftStack.Id,
+		logging.StackId, spaceliftUpdatedStack.Id,
 	).Info("Stack updated")
 
-	return r.updateK8sStackCRD(ctx, stack, *spaceliftStack)
+	return r.updateK8sStackCRD(ctx, stack, *spaceliftUpdatedStack)
 }
 
 func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {

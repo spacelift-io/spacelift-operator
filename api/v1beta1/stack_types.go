@@ -149,12 +149,6 @@ type Stack struct {
 	Status StackStatus `json:"status,omitempty"`
 }
 
-// IsNew return true if the resource has just been created.
-// If status.state is nil, it means that the controller does not have handled it yet, so it mean that it's a new one
-func (s *Stack) IsNew() bool {
-	return s.Status.Id == ""
-}
-
 func (s *Stack) Ready() bool {
 	return s.Status.Ready
 }
