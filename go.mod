@@ -5,7 +5,6 @@ go 1.21
 toolchain go1.21.4
 
 require (
-	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.16.0
 	github.com/gosimple/slug v1.14.0
 	github.com/nwidger/jsoncolor v0.3.2
@@ -25,6 +24,7 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
