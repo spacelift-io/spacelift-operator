@@ -32,7 +32,7 @@ type StackSpec struct {
 
 type StackInput struct {
 	AdditionalProjectGlobs *[]string     `json:"additionalProjectGlobs,omitempty"`
-	Administrative         bool          `json:"administrative"`
+	Administrative         bool          `json:"administrative,omitempty"`
 	AfterApply             *[]string     `json:"afterApply,omitempty"`
 	AfterDestroy           *[]string     `json:"afterDestroy,omitempty"`
 	AfterInit              *[]string     `json:"afterInit,omitempty"`
@@ -123,7 +123,9 @@ type StackStatus struct {
 	Url                string  `json:"url,omitempty"`
 	TrackedCommit      *Commit `json:"trackedCommit,omitempty"`
 	TrackedCommitSetBy *string `json:"trackedCommitSetBy,omitempty"`
-	Ready              bool    `json:"ready"`
+	Ready              bool    `json:"ready,omitempty"`
+	// Argo is a status that could be used by argo health check to sync on health
+	Argo *ArgoStatus `json:"argo,omitempty"`
 }
 
 type Commit struct {
@@ -147,19 +149,13 @@ type Stack struct {
 	Status StackStatus `json:"status,omitempty"`
 }
 
-// IsNew return true if the resource has just been created.
-// If status.state is nil, it means that the controller does not have handled it yet, so it mean that it's a new one
-func (s *Stack) IsNew() bool {
-	return s.Status.Id == ""
-}
-
 func (s *Stack) Ready() bool {
 	return s.Status.Ready
 }
 
 // SetStack is used to sync the k8s CRD with a spacelift stack model.
 // It basically takes care of updating all status fields
-func (s *Stack) SetStack(stack *models.Stack) {
+func (s *Stack) SetStack(stack models.Stack) {
 	if stack.Id != "" {
 		s.Status.Id = stack.Id
 	}

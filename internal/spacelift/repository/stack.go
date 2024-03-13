@@ -10,6 +10,7 @@ import (
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	spaceliftclient "github.com/spacelift-io/spacelift-operator/internal/spacelift/client"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/slug"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/structs"
 )
 
@@ -118,7 +119,7 @@ func (r *stackRepository) Update(ctx context.Context, stack *v1beta1.Stack) (*mo
 
 	stackInput := structs.FromStackSpec(stack.Spec)
 	vars := map[string]interface{}{
-		"id":    stack.Status.Id,
+		"id":    slug.SafeSlug(stack.Spec.Name),
 		"input": stackInput,
 	}
 
@@ -150,7 +151,7 @@ func (r *stackRepository) Get(ctx context.Context, stack *v1beta1.Stack) (*model
 		} `graphql:"stack(id: $stackId)"`
 	}
 	vars := map[string]any{
-		"stackId": graphql.ID(stack.Status.Id),
+		"stackId": graphql.ID(slug.SafeSlug(stack.Spec.Name)),
 	}
 	if err := c.Query(ctx, &query, vars); err != nil {
 		return nil, errors.Wrap(err, "unable to get stack")

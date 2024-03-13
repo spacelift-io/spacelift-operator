@@ -20,6 +20,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/pkg/errors"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,6 +31,7 @@ import (
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/logging"
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 	spaceliftRepository "github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
 )
 
@@ -69,19 +71,39 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// TODO(michalg): Add stack update logic here if stack exists, for now we can only create a new stack
-	if stack.IsNew() {
-		return r.handleNewStack(ctx, stack)
+	_, err = r.SpaceliftStackRepository.Get(ctx, stack)
+	if err != nil && !errors.Is(err, spaceliftRepository.ErrStackNotFound) {
+		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
 	}
 
-	return ctrl.Result{}, nil
+	if errors.Is(err, spaceliftRepository.ErrStackNotFound) {
+		// Stack does not exist in Spacelift, let's create it
+		return r.handleCreateStack(ctx, stack)
+	}
+
+	// TODO(michalg): compare retStack with stack spec to check if there are actual changes to be made
+	return r.handleUpdateStack(ctx, stack)
 }
 
-func (r *StackReconciler) handleNewStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
+func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	retStack, err := r.SpaceliftStackRepository.Get(ctx, stack)
-	logger.Info("Stack is new", "stack", stack, "retStack", retStack, "err", err)
+	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
+	if err != nil {
+		logger.Error(err, "Unable to update the stack in spacelift")
+		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
+		return ctrl.Result{}, nil
+	}
+
+	logger.WithValues(
+		logging.StackId, spaceliftUpdatedStack.Id,
+	).Info("Stack updated")
+
+	return r.updateStackStatus(ctx, stack, *spaceliftUpdatedStack)
+}
+
+func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
 
 	spaceliftStack, err := r.SpaceliftStackRepository.Create(ctx, stack)
 	if err != nil {
@@ -89,11 +111,32 @@ func (r *StackReconciler) handleNewStack(ctx context.Context, stack *v1beta1.Sta
 		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
 	}
-	logger.WithValues(
-		logging.StackId, stack.Status.Id,
-	).Info("New stack created")
 
-	// TODO(michalg): Set initial annotations when a stack is created
+	logger.WithValues(
+		logging.StackId, spaceliftStack.Id,
+	).Info("Stack created")
+
+	// Set initial annotations when stack is created
+	if stack.Annotations == nil {
+		stack.Annotations = make(map[string]string, 1)
+	}
+
+	stack.Annotations[v1beta1.ArgoExternalLink] = spaceliftStack.Url
+
+	// Updating annotations will not trigger another reconciliation loop
+	if err := r.StackRepository.Update(ctx, stack); err != nil {
+		if k8sErrors.IsConflict(err) {
+			logger.Info("Conflict on Stack update, let's try again.")
+			return ctrl.Result{RequeueAfter: time.Second * 3}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	return r.updateStackStatus(ctx, stack, *spaceliftStack)
+}
+
+func (r *StackReconciler) updateStackStatus(ctx context.Context, stack *v1beta1.Stack, spaceliftStack models.Stack) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
 
 	stack.SetStack(spaceliftStack)
 	if err := r.StackRepository.UpdateStatus(ctx, stack); err != nil {
@@ -103,6 +146,7 @@ func (r *StackReconciler) handleNewStack(ctx context.Context, stack *v1beta1.Sta
 		}
 		return ctrl.Result{}, err
 	}
+
 	return ctrl.Result{}, nil
 }
 
