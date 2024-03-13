@@ -10,11 +10,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/shurcooL/graphql"
-	"github.com/spacelift-io/spacelift-operator/internal/spacelift/client/session"
 	"golang.org/x/oauth2"
 	v1 "k8s.io/api/core/v1"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/spacelift-io/spacelift-operator/internal/spacelift/client/session"
 )
 
 // spaceliftClient is the authenticated client that can be used to interact with Spacelift
