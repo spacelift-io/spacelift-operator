@@ -70,19 +70,18 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	retStack, err := r.SpaceliftStackRepository.Get(ctx, stack)
-	if err != nil && errors.Is(err, spaceliftRepository.ErrStackNotFound) {
+	_, err = r.SpaceliftStackRepository.Get(ctx, stack)
+	if err != nil && !errors.Is(err, spaceliftRepository.ErrStackNotFound) {
 		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
 	}
 
-	// Stack exists in Spacelift
-	if err == nil && retStack != nil {
-		// TODO(michalg): compare retStack with stack spec to check if there are actual changes to be made
-		return r.handleUpdateStack(ctx, stack)
+	if errors.Is(err, spaceliftRepository.ErrStackNotFound) {
+		// Stack does not exist in Spacelift, let's create it
+		return r.handleCreateStack(ctx, stack)
 	}
 
-	// Stack does not exist in Spacelift, let's create it
-	return r.handleCreateStack(ctx, stack)
+	// TODO(michalg): compare retStack with stack spec to check if there are actual changes to be made
+	return r.handleUpdateStack(ctx, stack)
 }
 
 func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
