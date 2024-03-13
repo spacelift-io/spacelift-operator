@@ -20,6 +20,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/pkg/errors"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"github.com/pkg/errors"
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/logging"
@@ -71,7 +71,7 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	retStack, err := r.SpaceliftStackRepository.Get(ctx, stack)
-	if err != nil && err != spaceliftRepository.ErrStackNotFound {
+	if err != nil && errors.Is(err, spaceliftRepository.ErrStackNotFound) {
 		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
 	}
 
