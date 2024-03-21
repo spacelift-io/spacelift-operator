@@ -93,8 +93,14 @@ type TerraformInput struct {
 }
 
 func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
+
+	administrative := getGraphQLBoolean(stackSpec.Settings.Administrative)
+	if administrative == nil {
+		administrative = graphql.NewBoolean(false)
+	}
+
 	ret := StackInput{
-		Administrative:      graphql.Boolean(stackSpec.Settings.Administrative),
+		Administrative:      *administrative,
 		Autodeploy:          getGraphQLBoolean(stackSpec.Settings.Autodeploy),
 		Autoretry:           getGraphQLBoolean(stackSpec.Settings.Autoretry),
 		Branch:              graphql.String(stackSpec.Settings.Branch),
