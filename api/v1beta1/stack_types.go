@@ -32,7 +32,7 @@ type StackSpec struct {
 
 type StackInput struct {
 	AdditionalProjectGlobs *[]string     `json:"additionalProjectGlobs,omitempty"`
-	Administrative         bool          `json:"administrative,omitempty"`
+	Administrative         *bool         `json:"administrative,omitempty"`
 	AfterApply             *[]string     `json:"afterApply,omitempty"`
 	AfterDestroy           *[]string     `json:"afterDestroy,omitempty"`
 	AfterInit              *[]string     `json:"afterInit,omitempty"`

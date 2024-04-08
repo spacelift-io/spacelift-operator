@@ -292,6 +292,11 @@ func (in *StackInput) DeepCopyInto(out *StackInput) {
 			copy(*out, *in)
 		}
 	}
+	if in.Administrative != nil {
+		in, out := &in.Administrative, &out.Administrative
+		*out = new(bool)
+		**out = **in
+	}
 	if in.AfterApply != nil {
 		in, out := &in.AfterApply, &out.AfterApply
 		*out = new([]string)
