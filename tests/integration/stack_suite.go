@@ -24,7 +24,7 @@ var DefaultValidStack = v1beta1.Stack{
 	},
 	Spec: v1beta1.StackSpec{
 		Name:      "test-stack",
-		CommitSHA: "ed56c7b20e3dd075013cf0d7ab3ce083fdb7900f",
+		CommitSHA: func() *string { v := "ed56c7b20e3dd075013cf0d7ab3ce083fdb7900f"; return &v }(),
 		Settings: v1beta1.StackInput{
 			Branch:     "fake-branch",
 			Repository: "fake-repository",

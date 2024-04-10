@@ -226,7 +226,6 @@ spec:
                 - repository
                 type: object
             required:
-            - commitSHA
             - name
             - settings
             type: object

@@ -27,7 +27,7 @@ type StackSpec struct {
 	Name     string     `json:"name"`
 	Settings StackInput `json:"settings"`
 	// +kubebuilder:validation:MinLength=1
-	CommitSHA string `json:"commitSHA"`
+	CommitSHA *string `json:"commitSHA,omitempty"`
 }
 
 type StackInput struct {
@@ -46,7 +46,7 @@ type StackInput struct {
 	BeforeInit             *[]string     `json:"beforeInit,omitempty"`
 	BeforePerform          *[]string     `json:"beforePerform,omitempty"`
 	BeforePlan             *[]string     `json:"beforePlan,omitempty"`
-	Branch                 string        `json:"branch"`
+	Branch                 string        `json:"branch"` // Default to main?
 	Description            *string       `json:"description,,omitempty"`
 	GitHubActionDeploy     *bool         `json:"githubActionDeploy,omitempty"`
 	IsDisabled             *bool         `json:"isDisabled,omitempty"`
@@ -56,7 +56,7 @@ type StackInput struct {
 	ProjectRoot            *string       `json:"projectRoot,omitempty"`
 	ProtectFromDeletion    *bool         `json:"protectFromDeletion,omitempty"`
 	Provider               *string       `json:"provider,omitempty"`
-	Repository             string        `json:"repository"`
+	Repository             string        `json:"repository"` // Could be merged with the namespace
 	RepositoryURL          *string       `json:"repositoryURL,omitempty"`
 	RunnerImage            *string       `json:"runnerImage,omitempty"`
 	Space                  *string       `json:"space,omitempty"`
@@ -102,9 +102,9 @@ type PulumiConfig struct {
 }
 
 type TerraformConfig struct {
-	UseSmartSanitization       bool    `json:"useSmartSanitization,omitempty"`
-	Version                    *string `json:"version,omitempty"`
-	WorkflowTool               *string `json:"workflowTool,omitempty"`
+	UseSmartSanitization       bool    `json:"useSmartSanitization,omitempty"` // Should be optional
+	Version                    *string `json:"version,omitempty"`              // Should be optional and point to the latest one
+	WorkflowTool               *string `json:"workflowTool,omitempty"`         // Should be Terraform by default
 	Workspace                  *string `json:"workspace,omitempty"`
 	ExternalStateAccessEnabled bool    `json:"externalStateAccessEnabled,omitempty"`
 }
@@ -173,7 +173,9 @@ func (s *Stack) SetStack(stack models.Stack) {
 			Timestamp:   stack.TrackedCommit.Timestamp,
 			URL:         stack.TrackedCommit.URL,
 		}
-		s.Status.Ready = s.Status.TrackedCommit.Hash == s.Spec.CommitSHA
+		if s.Spec.CommitSHA != nil {
+			s.Status.Ready = s.Status.TrackedCommit.Hash == *s.Spec.CommitSHA
+		}
 	}
 
 	if stack.TrackedCommitSetBy != nil {
