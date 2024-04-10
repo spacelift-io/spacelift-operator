@@ -52,7 +52,11 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 	stackInput := structs.FromStackSpec(stack.Spec)
 	stackCreateMutationVars := map[string]interface{}{
 		"input":       stackInput,
-		"manageState": graphql.Boolean(stack.Spec.Settings.ManagesStateFile),
+		"manageState": graphql.Boolean(true),
+	}
+
+	if stack.Spec.Settings.ManagesStateFile != nil {
+		stackCreateMutationVars["manageState"] = graphql.Boolean(*stack.Spec.Settings.ManagesStateFile)
 	}
 
 	if err := c.Mutate(ctx, &stackCreateMutation, stackCreateMutationVars); err != nil {

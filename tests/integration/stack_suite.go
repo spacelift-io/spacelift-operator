@@ -26,9 +26,8 @@ var DefaultValidStack = v1beta1.Stack{
 		Name:      "test-stack",
 		CommitSHA: "ed56c7b20e3dd075013cf0d7ab3ce083fdb7900f",
 		Settings: v1beta1.StackInput{
-			ManagesStateFile: false,
-			Branch:           "fake-branch",
-			Repository:       "fake-repository",
+			Branch:     "fake-branch",
+			Repository: "fake-repository",
 		},
 	},
 	Status: v1beta1.StackStatus{
