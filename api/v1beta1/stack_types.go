@@ -52,11 +52,10 @@ type StackInput struct {
 	IsDisabled             *bool         `json:"isDisabled,omitempty"`
 	Labels                 *[]string     `json:"labels,omitempty"`
 	LocalPreviewEnabled    *bool         `json:"localPreviewEnabled,omitempty"`
-	Namespace              *string       `json:"namespace,omitempty"`
 	ProjectRoot            *string       `json:"projectRoot,omitempty"`
 	ProtectFromDeletion    *bool         `json:"protectFromDeletion,omitempty"`
 	Provider               *string       `json:"provider,omitempty"`
-	Repository             string        `json:"repository"` // Could be merged with the namespace
+	Repository             string        `json:"repository"`
 	RepositoryURL          *string       `json:"repositoryURL,omitempty"`
 	RunnerImage            *string       `json:"runnerImage,omitempty"`
 	Space                  *string       `json:"space,omitempty"`

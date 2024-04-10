@@ -440,11 +440,6 @@ func (in *StackInput) DeepCopyInto(out *StackInput) {
 		*out = new(bool)
 		**out = **in
 	}
-	if in.Namespace != nil {
-		in, out := &in.Namespace, &out.Namespace
-		*out = new(string)
-		**out = **in
-	}
 	if in.ProjectRoot != nil {
 		in, out := &in.ProjectRoot, &out.ProjectRoot
 		*out = new(string)

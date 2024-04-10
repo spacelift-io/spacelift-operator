@@ -1,6 +1,8 @@
 package structs
 
 import (
+	"strings"
+
 	"github.com/shurcooL/graphql"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
@@ -104,6 +106,13 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 		branch = graphql.String(*stackSpec.Settings.Branch)
 	}
 
+	var namespace *string
+	var repo = stackSpec.Settings.Repository
+	repoSplit := strings.SplitN(repo, "/", 2)
+	if len(repoSplit) == 2 {
+		namespace, repo = &repoSplit[0], repoSplit[1]
+	}
+
 	ret := StackInput{
 		Administrative:      *administrative,
 		Autodeploy:          getGraphQLBoolean(stackSpec.Settings.Autodeploy),
@@ -113,7 +122,8 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 		LocalPreviewEnabled: getGraphQLBoolean(stackSpec.Settings.LocalPreviewEnabled),
 		Name:                graphql.String(stackSpec.Name),
 		ProtectFromDeletion: getGraphQLBoolean(stackSpec.Settings.ProtectFromDeletion),
-		Repository:          graphql.String(stackSpec.Settings.Repository),
+		Namespace:           getGraphQLString(namespace),
+		Repository:          graphql.String(repo),
 	}
 
 	ret.AddditionalProjectGlobs = getGraphQLStrings(stackSpec.Settings.AdditionalProjectGlobs)
