@@ -242,11 +242,13 @@ func getVendorConfig(vendorConfig *v1beta1.VendorConfig) *VendorConfigInput {
 
 	// If nothing is specified, terraform will be the default vendor
 	terraformConfig := &TerraformInput{}
-	terraformConfig.Version = getGraphQLString(vendorConfig.Terraform.Version)
-	terraformConfig.WorkflowTool = getGraphQLString(vendorConfig.Terraform.WorkflowTool)
-	terraformConfig.Workspace = getGraphQLString(vendorConfig.Terraform.Workspace)
-	terraformConfig.UseSmartSanitization = (*graphql.Boolean)(&vendorConfig.Terraform.UseSmartSanitization)
-	terraformConfig.ExternalStateAccessEnabled = (*graphql.Boolean)(&vendorConfig.Terraform.ExternalStateAccessEnabled)
+	if vendorConfig.Terraform != nil {
+		terraformConfig.Version = getGraphQLString(vendorConfig.Terraform.Version)
+		terraformConfig.WorkflowTool = getGraphQLString(vendorConfig.Terraform.WorkflowTool)
+		terraformConfig.Workspace = getGraphQLString(vendorConfig.Terraform.Workspace)
+		terraformConfig.UseSmartSanitization = (*graphql.Boolean)(&vendorConfig.Terraform.UseSmartSanitization)
+		terraformConfig.ExternalStateAccessEnabled = (*graphql.Boolean)(&vendorConfig.Terraform.ExternalStateAccessEnabled)
+	}
 
 	return &VendorConfigInput{Terraform: terraformConfig}
 }
