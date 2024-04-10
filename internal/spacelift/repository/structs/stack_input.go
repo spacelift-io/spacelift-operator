@@ -143,11 +143,8 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 	ret.Labels = getGraphQLStrings(stackSpec.Settings.Labels)
 	ret.Space = getGraphQLString(stackSpec.Settings.Space)
 	ret.ProjectRoot = getGraphQLString(stackSpec.Settings.ProjectRoot)
-
 	ret.RunnerImage = getGraphQLString(stackSpec.Settings.RunnerImage)
-
 	ret.VendorConfig = getVendorConfig(stackSpec.Settings.VendorConfig)
-
 	ret.WorkerPool = getGraphQLID(stackSpec.Settings.WorkerPool)
 
 	return ret
