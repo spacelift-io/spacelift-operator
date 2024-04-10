@@ -68,7 +68,7 @@ type StackInput struct {
 	AWSIntegration *AWSIntegration `json:"awsIntegration,omitempty"`
 
 	// In our API managesStateFile is not part of StackInput
-	ManagesStateFile bool `json:"managesStateFile,omitempty"`
+	ManagesStateFile *bool `json:"managesStateFile,omitempty"`
 }
 
 type VendorConfig struct {
