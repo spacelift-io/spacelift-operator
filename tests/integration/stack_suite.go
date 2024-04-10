@@ -26,7 +26,7 @@ var DefaultValidStack = v1beta1.Stack{
 		Name:      "test-stack",
 		CommitSHA: func() *string { v := "ed56c7b20e3dd075013cf0d7ab3ce083fdb7900f"; return &v }(),
 		Settings: v1beta1.StackInput{
-			Branch:     "fake-branch",
+			Branch:     func() *string { v := "fake-branch"; return &v }(),
 			Repository: "fake-repository",
 		},
 	},

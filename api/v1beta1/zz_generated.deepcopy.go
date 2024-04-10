@@ -406,6 +406,11 @@ func (in *StackInput) DeepCopyInto(out *StackInput) {
 			copy(*out, *in)
 		}
 	}
+	if in.Branch != nil {
+		in, out := &in.Branch, &out.Branch
+		*out = new(string)
+		**out = **in
+	}
 	if in.Description != nil {
 		in, out := &in.Description, &out.Description
 		*out = new(string)

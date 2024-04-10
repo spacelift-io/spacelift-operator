@@ -222,7 +222,6 @@ spec:
                   workerPool:
                     type: string
                 required:
-                - branch
                 - repository
                 type: object
             required:

@@ -99,11 +99,16 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 		administrative = graphql.NewBoolean(false)
 	}
 
+	branch := graphql.String("main")
+	if stackSpec.Settings.Branch != nil {
+		branch = graphql.String(*stackSpec.Settings.Branch)
+	}
+
 	ret := StackInput{
 		Administrative:      *administrative,
 		Autodeploy:          getGraphQLBoolean(stackSpec.Settings.Autodeploy),
 		Autoretry:           getGraphQLBoolean(stackSpec.Settings.Autoretry),
-		Branch:              graphql.String(stackSpec.Settings.Branch),
+		Branch:              branch,
 		GitHubActionDeploy:  getGraphQLBoolean(stackSpec.Settings.GitHubActionDeploy),
 		LocalPreviewEnabled: getGraphQLBoolean(stackSpec.Settings.LocalPreviewEnabled),
 		Name:                graphql.String(stackSpec.Name),

@@ -46,7 +46,7 @@ type StackInput struct {
 	BeforeInit             *[]string     `json:"beforeInit,omitempty"`
 	BeforePerform          *[]string     `json:"beforePerform,omitempty"`
 	BeforePlan             *[]string     `json:"beforePlan,omitempty"`
-	Branch                 string        `json:"branch"` // Default to main?
+	Branch                 *string       `json:"branch,omitempty"`
 	Description            *string       `json:"description,,omitempty"`
 	GitHubActionDeploy     *bool         `json:"githubActionDeploy,omitempty"`
 	IsDisabled             *bool         `json:"isDisabled,omitempty"`
