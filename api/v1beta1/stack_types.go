@@ -180,6 +180,14 @@ func (s *Stack) SetStack(stack models.Stack) {
 	if stack.TrackedCommitSetBy != nil {
 		s.Status.TrackedCommitSetBy = stack.TrackedCommitSetBy
 	}
+
+	// TODO This is a temporary hack, we should not go in production with that.
+	// The correct approach would be to read the stack from spacelift in the reconciliation loop and compare it to
+	// the CRD to see if there are change. If yes, then we should switch ready to false, and in another reconciliation loop
+	// update the resource on spacelift if the stack is not ready.
+	if stack.TrackedCommit == nil {
+		s.Status.Ready = true
+	}
 }
 
 type AWSIntegration struct {
