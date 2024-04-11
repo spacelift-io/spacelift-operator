@@ -108,9 +108,10 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 
 	var namespace *string
 	var repo = stackSpec.Settings.Repository
-	repoSplit := strings.SplitN(repo, "/", 2)
-	if len(repoSplit) == 2 {
-		namespace, repo = &repoSplit[0], repoSplit[1]
+	if pos := strings.LastIndexByte(repo, '/'); pos != -1 {
+		ns := repo[:pos]
+		repo = repo[pos+1:]
+		namespace = &ns
 	}
 
 	ret := StackInput{
