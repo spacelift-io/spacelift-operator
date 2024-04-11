@@ -44,8 +44,17 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 
 	var stackCreateMutation struct {
 		StackCreate struct {
-			ID    string `graphql:"id"`
-			State string `graphql:"state"`
+			ID            string `graphql:"id"`
+			State         string `graphql:"state"`
+			TrackedCommit struct {
+				AuthorLogin *string `graphql:"authorLogin"`
+				AuthorName  string  `graphql:"authorName"`
+				Hash        string  `graphql:"hash"`
+				Message     string  `graphql:"message"`
+				Timestamp   uint    `graphql:"timestamp"`
+				URL         *string `graphql:"url"`
+			} `graphql:"trackedCommit"`
+			TrackedCommitSetBy *string `graphql:"trackedCommitSetBy"`
 		} `graphql:"stackCreate(input: $input, manageState: $manageState)"`
 	}
 
@@ -71,9 +80,20 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 		}
 	}
 
-	trackedCommit, trackedCommitSetBy, err := r.setTrackedCommit(ctx, c, stackCreateMutation.StackCreate.ID, stack.Spec.CommitSHA)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to set tracked commit on stack")
+	trackedCommit := &models.Commit{
+		AuthorLogin: stackCreateMutation.StackCreate.TrackedCommit.AuthorLogin,
+		AuthorName:  stackCreateMutation.StackCreate.TrackedCommit.AuthorName,
+		Hash:        stackCreateMutation.StackCreate.TrackedCommit.Hash,
+		Message:     stackCreateMutation.StackCreate.TrackedCommit.Message,
+		Timestamp:   stackCreateMutation.StackCreate.TrackedCommit.Timestamp,
+		URL:         stackCreateMutation.StackCreate.TrackedCommit.URL,
+	}
+	trackedCommitSetBy := stackCreateMutation.StackCreate.TrackedCommitSetBy
+	if stack.Spec.CommitSHA != nil && *stack.Spec.CommitSHA != "" {
+		trackedCommit, trackedCommitSetBy, err = r.setTrackedCommit(ctx, c, stackCreateMutation.StackCreate.ID, *stack.Spec.CommitSHA)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to set tracked commit on stack")
+		}
 	}
 
 	return &models.Stack{

@@ -1,6 +1,8 @@
 package structs
 
 import (
+	"strings"
+
 	"github.com/shurcooL/graphql"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
@@ -99,16 +101,29 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 		administrative = graphql.NewBoolean(false)
 	}
 
+	branch := graphql.String("main")
+	if stackSpec.Settings.Branch != nil {
+		branch = graphql.String(*stackSpec.Settings.Branch)
+	}
+
+	var namespace *string
+	var repo = stackSpec.Settings.Repository
+	repoSplit := strings.SplitN(repo, "/", 2)
+	if len(repoSplit) == 2 {
+		namespace, repo = &repoSplit[0], repoSplit[1]
+	}
+
 	ret := StackInput{
 		Administrative:      *administrative,
 		Autodeploy:          getGraphQLBoolean(stackSpec.Settings.Autodeploy),
 		Autoretry:           getGraphQLBoolean(stackSpec.Settings.Autoretry),
-		Branch:              graphql.String(stackSpec.Settings.Branch),
+		Branch:              branch,
 		GitHubActionDeploy:  getGraphQLBoolean(stackSpec.Settings.GitHubActionDeploy),
 		LocalPreviewEnabled: getGraphQLBoolean(stackSpec.Settings.LocalPreviewEnabled),
 		Name:                graphql.String(stackSpec.Name),
 		ProtectFromDeletion: getGraphQLBoolean(stackSpec.Settings.ProtectFromDeletion),
-		Repository:          graphql.String(stackSpec.Settings.Repository),
+		Namespace:           getGraphQLString(namespace),
+		Repository:          graphql.String(repo),
 	}
 
 	ret.AddditionalProjectGlobs = getGraphQLStrings(stackSpec.Settings.AdditionalProjectGlobs)
@@ -128,11 +143,8 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 	ret.Labels = getGraphQLStrings(stackSpec.Settings.Labels)
 	ret.Space = getGraphQLString(stackSpec.Settings.Space)
 	ret.ProjectRoot = getGraphQLString(stackSpec.Settings.ProjectRoot)
-
 	ret.RunnerImage = getGraphQLString(stackSpec.Settings.RunnerImage)
-
 	ret.VendorConfig = getVendorConfig(stackSpec.Settings.VendorConfig)
-
 	ret.WorkerPool = getGraphQLID(stackSpec.Settings.WorkerPool)
 
 	return ret
@@ -230,11 +242,13 @@ func getVendorConfig(vendorConfig *v1beta1.VendorConfig) *VendorConfigInput {
 
 	// If nothing is specified, terraform will be the default vendor
 	terraformConfig := &TerraformInput{}
-	terraformConfig.Version = getGraphQLString(vendorConfig.Terraform.Version)
-	terraformConfig.WorkflowTool = getGraphQLString(vendorConfig.Terraform.WorkflowTool)
-	terraformConfig.Workspace = getGraphQLString(vendorConfig.Terraform.Workspace)
-	terraformConfig.UseSmartSanitization = (*graphql.Boolean)(&vendorConfig.Terraform.UseSmartSanitization)
-	terraformConfig.ExternalStateAccessEnabled = (*graphql.Boolean)(&vendorConfig.Terraform.ExternalStateAccessEnabled)
+	if vendorConfig.Terraform != nil {
+		terraformConfig.Version = getGraphQLString(vendorConfig.Terraform.Version)
+		terraformConfig.WorkflowTool = getGraphQLString(vendorConfig.Terraform.WorkflowTool)
+		terraformConfig.Workspace = getGraphQLString(vendorConfig.Terraform.Workspace)
+		terraformConfig.UseSmartSanitization = (*graphql.Boolean)(&vendorConfig.Terraform.UseSmartSanitization)
+		terraformConfig.ExternalStateAccessEnabled = (*graphql.Boolean)(&vendorConfig.Terraform.ExternalStateAccessEnabled)
+	}
 
 	return &VendorConfigInput{Terraform: terraformConfig}
 }

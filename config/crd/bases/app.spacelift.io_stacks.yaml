@@ -125,8 +125,6 @@ spec:
                   managesStateFile:
                     description: In our API managesStateFile is not part of StackInput
                     type: boolean
-                  namespace:
-                    type: string
                   projectRoot:
                     type: string
                   protectFromDeletion:
@@ -222,11 +220,9 @@ spec:
                   workerPool:
                     type: string
                 required:
-                - branch
                 - repository
                 type: object
             required:
-            - commitSHA
             - name
             - settings
             type: object

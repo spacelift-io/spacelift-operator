@@ -27,7 +27,7 @@ type StackSpec struct {
 	Name     string     `json:"name"`
 	Settings StackInput `json:"settings"`
 	// +kubebuilder:validation:MinLength=1
-	CommitSHA string `json:"commitSHA"`
+	CommitSHA *string `json:"commitSHA,omitempty"`
 }
 
 type StackInput struct {
@@ -46,13 +46,12 @@ type StackInput struct {
 	BeforeInit             *[]string     `json:"beforeInit,omitempty"`
 	BeforePerform          *[]string     `json:"beforePerform,omitempty"`
 	BeforePlan             *[]string     `json:"beforePlan,omitempty"`
-	Branch                 string        `json:"branch"`
-	Description            *string       `json:"description,,omitempty"`
+	Branch                 *string       `json:"branch,omitempty"`
+	Description            *string       `json:"description,omitempty"`
 	GitHubActionDeploy     *bool         `json:"githubActionDeploy,omitempty"`
 	IsDisabled             *bool         `json:"isDisabled,omitempty"`
 	Labels                 *[]string     `json:"labels,omitempty"`
 	LocalPreviewEnabled    *bool         `json:"localPreviewEnabled,omitempty"`
-	Namespace              *string       `json:"namespace,omitempty"`
 	ProjectRoot            *string       `json:"projectRoot,omitempty"`
 	ProtectFromDeletion    *bool         `json:"protectFromDeletion,omitempty"`
 	Provider               *string       `json:"provider,omitempty"`
@@ -102,9 +101,9 @@ type PulumiConfig struct {
 }
 
 type TerraformConfig struct {
-	UseSmartSanitization       bool    `json:"useSmartSanitization,omitempty"`
-	Version                    *string `json:"version,omitempty"`
-	WorkflowTool               *string `json:"workflowTool,omitempty"`
+	UseSmartSanitization       bool    `json:"useSmartSanitization,omitempty"` // Should be optional
+	Version                    *string `json:"version,omitempty"`              // Should be optional and point to the latest one
+	WorkflowTool               *string `json:"workflowTool,omitempty"`         // Should be Terraform by default
 	Workspace                  *string `json:"workspace,omitempty"`
 	ExternalStateAccessEnabled bool    `json:"externalStateAccessEnabled,omitempty"`
 }
@@ -173,7 +172,9 @@ func (s *Stack) SetStack(stack models.Stack) {
 			Timestamp:   stack.TrackedCommit.Timestamp,
 			URL:         stack.TrackedCommit.URL,
 		}
-		s.Status.Ready = s.Status.TrackedCommit.Hash == s.Spec.CommitSHA
+		if s.Spec.CommitSHA != nil {
+			s.Status.Ready = s.Status.TrackedCommit.Hash == *s.Spec.CommitSHA
+		}
 	}
 
 	if stack.TrackedCommitSetBy != nil {
