@@ -146,6 +146,5 @@ func (c *client) apiClient(ctx context.Context) (*graphql.Client, error) {
 	return graphql.NewClient(c.session.Endpoint(), oauth2.NewClient(
 		context.WithValue(ctx, oauth2.HTTPClient, c.wraps), oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: bearerToken},
-		),
-	)), nil
+		)), graphql.WithHeader("Spacelift-Client-Type", "k8s-operator")), nil
 }
