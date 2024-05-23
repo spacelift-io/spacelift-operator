@@ -64,6 +64,10 @@ vet: ## Run go vet against code.
 test: manifests generate fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -v -race -coverprofile cover.out
 
+.PHONY: test-ci
+test-ci: envtest ## Run test without dependencies to other make targets that are useless in CI.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -v -race -coverprofile cover.out
+
 ##@ Build
 
 .PHONY: build
