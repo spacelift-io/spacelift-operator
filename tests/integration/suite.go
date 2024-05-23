@@ -44,9 +44,11 @@ type IntegrationTestSuite struct {
 
 	FakeSpaceliftRunRepo   *mocks.RunRepository
 	FakeSpaceliftStackRepo *mocks.StackRepository
+	FakeSpaceliftSpaceRepo *mocks.SpaceRepository
 
 	RunRepo   *repository.RunRepository
 	StackRepo *repository.StackRepository
+	SpaceRepo *repository.SpaceRepository
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {

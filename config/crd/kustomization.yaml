@@ -4,6 +4,7 @@
 resources:
 - bases/app.spacelift.io_runs.yaml
 - bases/app.spacelift.io_stacks.yaml
+- bases/app.spacelift.io_spaces.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:

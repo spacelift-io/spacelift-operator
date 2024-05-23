@@ -132,6 +132,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Stack")
 		os.Exit(1)
 	}
+	if err = (&controller.SpaceReconciler{
+		SpaceRepository:          repository.NewSpaceRepository(mgr.GetClient()),
+		SpaceliftSpaceRepository: spaceliftRepository.NewSpaceRepository(mgr.GetClient()),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Space")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

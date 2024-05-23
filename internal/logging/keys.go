@@ -8,4 +8,6 @@ const (
 
 	StackName = "stack.name"
 	StackId   = "stack.id"
+
+	SpaceId = "space.id"
 )
