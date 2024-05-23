@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -16,7 +17,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	kubezap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -49,7 +50,7 @@ type IntegrationTestSuite struct {
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
-	logf.SetLogger(kubezap.New(
+	logger := kubezap.New(
 		kubezap.WriteTo(os.Stdout),
 		kubezap.UseDevMode(true),
 		kubezap.RawZapOpts(
@@ -58,7 +59,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 				s.Logs = logs
 				return zapcore.NewTee(core, zapCoreObserver)
 			})),
-	))
+	)
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 
 	s.testEnv = &envtest.Environment{
@@ -87,7 +88,11 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.Require().NotNil(s.k8sClient)
 
+	// The SetLogger is here just to prevent a warning, but it's a no-op
+	// See sigs.k8s.io/controller-runtime@v0.16.0/pkg/log/log.go:79
+	ctrl.SetLogger(logr.New(log.NullLogSink{}))
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Logger: logger,
 		Scheme: scheme.Scheme,
 	})
 	s.Require().NoError(err)

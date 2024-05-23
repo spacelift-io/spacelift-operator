@@ -82,7 +82,7 @@ func (s *RunControllerSuite) TestRunCreation_InvalidSpec() {
 	}
 
 	for _, c := range cases {
-		s.T().Run(c.Name, func(t *testing.T) {
+		s.Run(c.Name, func() {
 			newRun := &v1beta1.Run{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Run",
@@ -105,7 +105,7 @@ func (s *RunControllerSuite) TestRunCreation_UnableToCreateOnSpacelift() {
 	s.FakeSpaceliftRunRepo.EXPECT().Create(mock.Anything, mock.Anything).Once().
 		Return(nil, fmt.Errorf("unable to create resource on spacelift"))
 
-	stack, err := s.CreateTestStack()
+	stack, err := s.CreateTestStackWithStatus()
 	s.Require().NoError(err)
 	defer s.DeleteStack(stack)
 
@@ -169,7 +169,7 @@ func (s *RunControllerSuite) TestRunCreation_OK() {
 		},
 	}, nil)
 
-	stack, err := s.CreateTestStack()
+	stack, err := s.CreateTestStackWithStatus()
 	s.Require().NoError(err)
 	defer s.DeleteStack(stack)
 
@@ -220,7 +220,7 @@ func (s *RunControllerSuite) TestRunCreation_OK_WithErrorDuringWatch() {
 
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Return(&models.Stack{Outputs: []models.StackOutput{}}, nil)
 
-	stack, err := s.CreateTestStack()
+	stack, err := s.CreateTestStackWithStatus()
 	s.Require().NoError(err)
 	defer s.DeleteStack(stack)
 

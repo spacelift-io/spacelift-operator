@@ -38,6 +38,7 @@ spec:
                 minLength: 1
                 type: string
               name:
+                minLength: 1
                 type: string
               settings:
                 properties:
@@ -229,45 +230,7 @@ spec:
           status:
             description: StackStatus defines the observed state of Stack
             properties:
-              argo:
-                description: Argo is a status that could be used by argo health check
-                  to sync on health
-                properties:
-                  health:
-                    description: ArgoHealth is a string type to represent the argo
-                      health of a resource More info on the argo doc here https://argo-cd.readthedocs.io/en/stable/operator-manual/health/
-                    type: string
-                required:
-                - health
-                type: object
               id:
-                description: State is the stack state
-                type: string
-              ready:
-                type: boolean
-              trackedCommit:
-                properties:
-                  authorLogin:
-                    type: string
-                  authorName:
-                    type: string
-                  hash:
-                    type: string
-                  message:
-                    type: string
-                  timestamp:
-                    type: integer
-                  url:
-                    type: string
-                required:
-                - authorName
-                - hash
-                - message
-                - timestamp
-                type: object
-              trackedCommitSetBy:
-                type: string
-              url:
                 type: string
             type: object
         type: object
