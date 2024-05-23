@@ -23,17 +23,27 @@ var DefaultValidStack = v1beta1.Stack{
 		Namespace: "default",
 	},
 	Spec: v1beta1.StackSpec{
-		Name:      "test-stack",
-		CommitSHA: func() *string { v := "ed56c7b20e3dd075013cf0d7ab3ce083fdb7900f"; return &v }(),
+		Name: "test-stack",
 		Settings: v1beta1.StackInput{
 			Branch:     func() *string { v := "fake-branch"; return &v }(),
 			Repository: "fake-repository",
 		},
 	},
-	Status: v1beta1.StackStatus{
-		Id:    "test-stack",
-		Ready: true,
-	},
+}
+var DefaultValidStackStatus = v1beta1.StackStatus{
+	Id: "test-stack-id",
+}
+
+func (s *WithStackSuiteHelper) CreateTestStackWithStatus() (*v1beta1.Stack, error) {
+	stack := DefaultValidStack
+	if err := s.Client().Create(s.Context(), &stack); err != nil {
+		return nil, err
+	}
+	stack.Status = DefaultValidStackStatus
+	if err := s.Client().Status().Update(s.Context(), &stack); err != nil {
+		return nil, err
+	}
+	return &stack, nil
 }
 
 func (s *WithStackSuiteHelper) CreateTestStack() (*v1beta1.Stack, error) {
@@ -41,11 +51,16 @@ func (s *WithStackSuiteHelper) CreateTestStack() (*v1beta1.Stack, error) {
 	if err := s.Client().Create(s.Context(), &stack); err != nil {
 		return nil, err
 	}
-	stack.Status = DefaultValidStack.Status
-	if err := s.Client().Status().Update(s.Context(), &stack); err != nil {
-		return nil, err
-	}
+	s.WaitUntilStackExists(&stack)
 	return &stack, nil
+}
+
+func (s *WithStackSuiteHelper) WaitUntilStackExists(stack *v1beta1.Stack) bool {
+	return s.Eventually(func() bool {
+		st := &v1beta1.Stack{}
+		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: stack.Namespace, Name: stack.Name}, st)
+		return err == nil
+	}, DefaultTimeout, DefaultInterval)
 }
 
 func (s *WithStackSuiteHelper) DeleteStack(stack *v1beta1.Stack) {

@@ -24,6 +24,7 @@ import (
 
 // StackSpec defines the desired state of Stack
 type StackSpec struct {
+	// +kubebuilder:validation:MinLength=1
 	Name     string     `json:"name"`
 	Settings StackInput `json:"settings"`
 	// +kubebuilder:validation:MinLength=1
@@ -117,14 +118,7 @@ type TerragruntConfig struct {
 
 // StackStatus defines the observed state of Stack
 type StackStatus struct {
-	// State is the stack state
-	Id                 string  `json:"id,omitempty"`
-	Url                string  `json:"url,omitempty"`
-	TrackedCommit      *Commit `json:"trackedCommit,omitempty"`
-	TrackedCommitSetBy *string `json:"trackedCommitSetBy,omitempty"`
-	Ready              bool    `json:"ready,omitempty"`
-	// Argo is a status that could be used by argo health check to sync on health
-	Argo *ArgoStatus `json:"argo,omitempty"`
+	Id string `json:"id,omitempty"`
 }
 
 type Commit struct {
@@ -149,7 +143,7 @@ type Stack struct {
 }
 
 func (s *Stack) Ready() bool {
-	return s.Status.Ready
+	return s.Status.Id != ""
 }
 
 // SetStack is used to sync the k8s CRD with a spacelift stack model.
@@ -157,36 +151,6 @@ func (s *Stack) Ready() bool {
 func (s *Stack) SetStack(stack models.Stack) {
 	if stack.Id != "" {
 		s.Status.Id = stack.Id
-	}
-
-	if stack.Url != "" {
-		s.Status.Url = stack.Url
-	}
-
-	if stack.TrackedCommit != nil {
-		s.Status.TrackedCommit = &Commit{
-			AuthorLogin: stack.TrackedCommit.AuthorLogin,
-			AuthorName:  stack.TrackedCommit.AuthorName,
-			Hash:        stack.TrackedCommit.Hash,
-			Message:     stack.TrackedCommit.Message,
-			Timestamp:   stack.TrackedCommit.Timestamp,
-			URL:         stack.TrackedCommit.URL,
-		}
-		if s.Spec.CommitSHA != nil {
-			s.Status.Ready = s.Status.TrackedCommit.Hash == *s.Spec.CommitSHA
-		}
-	}
-
-	if stack.TrackedCommitSetBy != nil {
-		s.Status.TrackedCommitSetBy = stack.TrackedCommitSetBy
-	}
-
-	// TODO This is a temporary hack, we should not go in production with that.
-	// The correct approach would be to read the stack from spacelift in the reconciliation loop and compare it to
-	// the CRD to see if there are change. If yes, then we should switch ready to false, and in another reconciliation loop
-	// update the resource on spacelift if the stack is not ready.
-	if stack.TrackedCommit == nil {
-		s.Status.Ready = true
 	}
 }
 

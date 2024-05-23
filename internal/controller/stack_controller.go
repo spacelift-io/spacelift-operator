@@ -48,10 +48,6 @@ type StackReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Stack object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.0/pkg/reconcile
@@ -81,7 +77,6 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return r.handleCreateStack(ctx, stack)
 	}
 
-	// TODO(michalg): compare retStack with stack spec to check if there are actual changes to be made
 	return r.handleUpdateStack(ctx, stack)
 }
 
@@ -91,15 +86,17 @@ func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.
 	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
 	if err != nil {
 		logger.Error(err, "Unable to update the stack in spacelift")
-		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
+		// TODO: Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
 	}
+
+	res, err := r.updateStackStatus(ctx, stack, *spaceliftUpdatedStack)
 
 	logger.WithValues(
 		logging.StackId, spaceliftUpdatedStack.Id,
 	).Info("Stack updated")
 
-	return r.updateStackStatus(ctx, stack, *spaceliftUpdatedStack)
+	return res, err
 }
 
 func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
@@ -108,13 +105,9 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 	spaceliftStack, err := r.SpaceliftStackRepository.Create(ctx, stack)
 	if err != nil {
 		logger.Error(err, "Unable to create the stack in spacelift")
-		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
+		// TODO: Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
 	}
-
-	logger.WithValues(
-		logging.StackId, spaceliftStack.Id,
-	).Info("Stack created")
 
 	// Set initial annotations when stack is created
 	if stack.Annotations == nil {
@@ -132,7 +125,13 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 		return ctrl.Result{}, err
 	}
 
-	return r.updateStackStatus(ctx, stack, *spaceliftStack)
+	res, err := r.updateStackStatus(ctx, stack, *spaceliftStack)
+
+	logger.WithValues(
+		logging.StackId, spaceliftStack.Id,
+	).Info("Stack created")
+
+	return res, err
 }
 
 func (r *StackReconciler) updateStackStatus(ctx context.Context, stack *v1beta1.Stack, spaceliftStack models.Stack) (ctrl.Result, error) {
@@ -158,7 +157,7 @@ func (r *StackReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			// Always handle new resource creation
 			CreateFunc: func(event.CreateEvent) bool { return true },
 			// Always handle resource update
-			UpdateFunc: func(e event.UpdateEvent) bool { return true },
+			UpdateFunc: func(e event.UpdateEvent) bool { return e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration() },
 			// We don't care about stack removal
 			DeleteFunc: func(event.DeleteEvent) bool { return false },
 		}).
