@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap/zaptest/observer"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -14,6 +16,7 @@ import (
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/controller"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
+	"github.com/spacelift-io/spacelift-operator/internal/logging"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/mocks"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/watcher"
@@ -160,6 +163,63 @@ func (s *RunControllerSuite) TestRunCreation_OK() {
 			State: string(v1beta1.RunStateFinished),
 		}, nil)
 
+	stack, err := s.CreateTestStackWithStatus()
+	s.Require().NoError(err)
+	defer s.DeleteStack(stack)
+
+	s.Logs.TakeAll()
+	run, err := s.CreateTestRun()
+	s.Require().NoError(err)
+
+	var logs *observer.ObservedLogs
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("New run created")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+	logContext := logs.All()[0].ContextMap()
+	s.Assert().Equal(v1beta1.RunStateQueued, logContext[logging.RunState])
+	s.Assert().Equal("test-stack", logContext[logging.StackId])
+	// A special test.id annotation is set by the CreateTestRun function to be
+	// able to assert on that.
+	s.Assert().Equal(run.Annotations["test.id"], logContext[logging.RunId])
+
+	// Assert that the Queued state has been applied
+	run = s.AssertRunState(run, "READY")
+	s.Require().NotNil(run.Annotations)
+	s.Assert().Equal("http://example.com/test", run.Annotations[v1beta1.ArgoExternalLink])
+
+	// Assert that the state has been changed by the watcher
+	run = s.AssertRunState(run, "APPLYING")
+
+	// Assert that the state has been changed by the watcher to finished
+	run = s.AssertRunState(run, v1beta1.RunStateFinished)
+
+	// Make sure no secrets are created by default
+	s.Require().Never(func() bool {
+		secrets, err := s.GetStackOutput(stack)
+		return secrets != nil || !k8sErrors.IsNotFound(err)
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+}
+
+func (s *RunControllerSuite) TestRunCreation_OK_WithCreateSecretFromStackOutput() {
+	run := integration.DefaultValidRun
+	run.Spec.CreateSecretFromStackOutput = true
+
+	// mock below will mimic the following state machine from Spacelift.
+	// QUEUED -> FINISHED
+	// This is working by matching the run state with a mock argument matcher, then returns
+	// the next state.
+	// We don't really need a real scenario here, we just want to check that secrets are created
+
+	s.FakeSpaceliftRunRepo.EXPECT().
+		Get(mock.Anything, mock.MatchedBy(func(run *v1beta1.Run) bool {
+			return run.Status.State == v1beta1.RunStateQueued
+		})).
+		Once().
+		Return(&models.Run{
+			State: string(v1beta1.RunStateFinished),
+		}, nil)
+
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Return(&models.Stack{
 		Outputs: []models.StackOutput{
 			{
@@ -173,24 +233,14 @@ func (s *RunControllerSuite) TestRunCreation_OK() {
 	s.Require().NoError(err)
 	defer s.DeleteStack(stack)
 
-	run, err := s.CreateTestRun()
+	s.Logs.TakeAll()
+	err = s.CreateRun(&run)
 	s.Require().NoError(err)
 
-	// Assert that the Queued state has been applied
-	run = s.AssertRunState(run, "READY")
-	s.Require().NotNil(run.Annotations)
-	s.Assert().Equal("http://example.com/test", run.Annotations[v1beta1.ArgoExternalLink])
-	s.Require().NotNil(run.Status.Argo)
-	s.Assert().Equal(v1beta1.ArgoHealthProgressing, run.Status.Argo.Health)
-
-	// Assert that the state has been changed by the watcher
-	run = s.AssertRunState(run, "APPLYING")
-	s.Assert().Equal(v1beta1.ArgoHealthProgressing, run.Status.Argo.Health)
-
-	// Assert that the state has been changed by the watcher to finished
-	run = s.AssertRunState(run, v1beta1.RunStateFinished)
-	s.WaitUntilHealthy(run)
-	s.Assert().Equal(v1beta1.ArgoHealthHealthy, run.Status.Argo.Health)
+	s.Require().Eventually(func() bool {
+		logs := s.Logs.FilterMessage("Updated stack output secret")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
 
 	secrets, err := s.GetStackOutput(stack)
 	s.Require().NoError(err)
@@ -217,8 +267,6 @@ func (s *RunControllerSuite) TestRunCreation_OK_WithErrorDuringWatch() {
 		Return(&models.Run{
 			State: string(v1beta1.RunStateFinished),
 		}, nil).NotBefore(errCall)
-
-	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Return(&models.Stack{Outputs: []models.StackOutput{}}, nil)
 
 	stack, err := s.CreateTestStackWithStatus()
 	s.Require().NoError(err)

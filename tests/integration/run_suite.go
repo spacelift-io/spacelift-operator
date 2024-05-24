@@ -31,27 +31,33 @@ type WithRunSuiteHelper struct {
 	*IntegrationTestSuite
 }
 
-func (s *WithRunSuiteHelper) CreateTestRun() (*v1beta1.Run, error) {
+func (s *WithRunSuiteHelper) CreateRun(run *v1beta1.Run) error {
 	fakeRunULID := ulid.Make().String()
-	run := DefaultValidRun
-	run.ObjectMeta.Annotations = map[string]string{
-		"test.id": fakeRunULID,
+	if run.Annotations == nil {
+		run.Annotations = map[string]string{}
 	}
+	run.Annotations["test.id"] = fakeRunULID
+	stackName := run.Spec.StackName
 	s.FakeSpaceliftRunRepo.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(r *v1beta1.Stack) bool {
-			return r.Name == run.Spec.StackName
+			return r.Name == stackName
 		})).
 		Once().
 		Return(&models.Run{
-			Id:    fakeRunULID,
-			State: string(v1beta1.RunStateQueued),
-			Url:   "http://example.com/test",
+			Id:      fakeRunULID,
+			State:   string(v1beta1.RunStateQueued),
+			Url:     "http://example.com/test",
+			StackId: stackName,
 		}, nil)
-	if err := s.Client().Create(s.Context(), &run); err != nil {
-		return nil, err
+	if err := s.Client().Create(s.Context(), run); err != nil {
+		return err
 	}
+	return nil
+}
 
-	return &run, nil
+func (s *WithRunSuiteHelper) CreateTestRun() (*v1beta1.Run, error) {
+	run := DefaultValidRun
+	return &run, s.CreateRun(&run)
 }
 
 func (s *WithRunSuiteHelper) AssertRunState(run *v1beta1.Run, status v1beta1.RunState, timeParams ...time.Duration) *v1beta1.Run {
@@ -79,14 +85,4 @@ func (s *WithRunSuiteHelper) AssertRunState(run *v1beta1.Run, status v1beta1.Run
 	}
 	log.Printf("Successfully asserted run state: %s", status)
 	return refreshedRun
-}
-
-func (s *WithRunSuiteHelper) WaitUntilHealthy(run *v1beta1.Run) bool {
-	return s.Eventually(func() bool {
-		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: run.Namespace, Name: run.Name}, run)
-		if err != nil {
-			return false
-		}
-		return run.Status.Argo.Health == v1beta1.ArgoHealthHealthy
-	}, DefaultTimeout, DefaultInterval)
 }

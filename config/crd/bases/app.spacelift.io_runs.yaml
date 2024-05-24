@@ -41,6 +41,8 @@ spec:
           spec:
             description: RunSpec defines the desired state of Run
             properties:
+              createSecretFromStackOutput:
+                type: boolean
               stackName:
                 description: StackName is the name of the stack for this run, this
                   is mandatory
@@ -52,30 +54,15 @@ spec:
           status:
             description: RunStatus defines the observed state of Run
             properties:
-              argo:
-                description: Argo is a status that could be used by argo health check
-                  to sync on health
-                properties:
-                  health:
-                    description: ArgoHealth is a string type to represent the argo
-                      health of a resource More info on the argo doc here https://argo-cd.readthedocs.io/en/stable/operator-manual/health/
-                    type: string
-                required:
-                - health
-                type: object
               id:
                 description: Id is the run ULID on Spacelift
                 type: string
-              ready:
-                type: boolean
               stackId:
                 type: string
               state:
                 description: State is the run state, see RunState for all possibles
                   state of a run
                 type: string
-            required:
-            - ready
             type: object
         required:
         - spec

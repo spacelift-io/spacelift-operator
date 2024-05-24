@@ -26,7 +26,8 @@ import (
 type RunSpec struct {
 	// StackName is the name of the stack for this run, this is mandatory
 	// +kubebuilder:validation:MinLength=1
-	StackName string `json:"stackName"`
+	StackName                   string `json:"stackName"`
+	CreateSecretFromStackOutput bool   `json:"createSecretFromStackOutput,omitempty"`
 }
 
 type RunState string
@@ -55,12 +56,9 @@ var terminalStates = map[RunState]interface{}{
 type RunStatus struct {
 	// State is the run state, see RunState for all possibles state of a run
 	State RunState `json:"state,omitempty"`
-	Ready bool     `json:"ready"`
 	// Id is the run ULID on Spacelift
 	Id      string `json:"id,omitempty"`
 	StackId string `json:"stackId,omitempty"`
-	// Argo is a status that could be used by argo health check to sync on health
-	Argo *ArgoStatus `json:"argo,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -93,11 +91,6 @@ func (r *Run) Finished() bool {
 	return r.Status.State == RunStateFinished
 }
 
-type RunCreated struct {
-	Id, Url string
-	State   RunState
-}
-
 // SetRun is used to sync the k8s CRD with a spacelift run model.
 // It basically takes care of updating all status fields
 func (r *Run) SetRun(run *models.Run) {
@@ -108,27 +101,6 @@ func (r *Run) SetRun(run *models.Run) {
 		r.Status.State = RunState(run.State)
 	}
 	r.Status.StackId = run.StackId
-}
-
-func (r *Run) SetHealthy() {
-	r.Status.Argo.Health = ArgoHealthHealthy
-	r.Status.Ready = true
-}
-
-func (r *Run) UpdateArgoHealth() {
-	argoHealth := &ArgoStatus{
-		Health: ArgoHealthProgressing,
-	}
-	if r.Status.State == RunStateUnconfirmed {
-		argoHealth.Health = ArgoHealthSuspended
-	}
-	if r.Status.State == RunStateFailed ||
-		r.Status.State == RunStateStopped ||
-		r.Status.State == RunStateCanceled ||
-		r.Status.State == RunStateDiscarded {
-		argoHealth.Health = ArgoHealthDegraded
-	}
-	r.Status.Argo = argoHealth
 }
 
 //+kubebuilder:object:root=true

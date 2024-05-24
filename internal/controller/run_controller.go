@@ -110,20 +110,15 @@ func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run, stac
 	spaceliftRun, err := r.SpaceliftRunRepository.Create(ctx, stack)
 	if err != nil {
 		logger.Error(err, "Unable to create the run in spacelift")
-		// TODO(eliecharra): Implement better error handling and retry errors that could be retried
+		// TODO: Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
 	}
-	logger.WithValues(
-		logging.RunState, run.Status.State,
-		logging.RunId, run.Status.Id,
-	).Info("New run created")
 
 	// Set initial annotations when a run is created
 	if run.Annotations == nil {
 		run.Annotations = make(map[string]string, 1)
 	}
 	run.Annotations[v1beta1.ArgoExternalLink] = spaceliftRun.Url
-	// Updating annotations will not trigger another reconciliation loop
 	if err := r.RunRepository.Update(ctx, run); err != nil {
 		if k8sErrors.IsConflict(err) {
 			logger.Info("Conflict on Run update, let's try again.")
@@ -131,6 +126,7 @@ func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run, stac
 		}
 		return ctrl.Result{}, err
 	}
+
 	run.SetRun(spaceliftRun)
 	if err := r.RunRepository.UpdateStatus(ctx, run); err != nil {
 		if k8sErrors.IsConflict(err) {
@@ -139,6 +135,13 @@ func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run, stac
 		}
 		return ctrl.Result{}, err
 	}
+
+	logger.WithValues(
+		logging.RunState, run.Status.State,
+		logging.RunId, run.Status.Id,
+		logging.StackId, run.Status.StackId,
+	).Info("New run created")
+
 	return ctrl.Result{}, nil
 }
 
@@ -163,7 +166,7 @@ func (r *RunReconciler) handleRunUpdate(ctx context.Context, run *v1beta1.Run, s
 		return ctrl.Result{}, nil
 	}
 
-	if run.Finished() {
+	if run.Finished() && run.Spec.CreateSecretFromStackOutput {
 		return r.updateStackOutputSecret(ctx, run, stack)
 	}
 
@@ -183,14 +186,6 @@ func (r *RunReconciler) updateStackOutputSecret(ctx context.Context, run *v1beta
 		return ctrl.Result{}, err
 	}
 	logger.Info("Updated stack output secret", "secret", secret.Name)
-	run.SetHealthy()
-	if err := r.RunRepository.UpdateStatus(ctx, run); err != nil {
-		if k8sErrors.IsConflict(err) {
-			logger.Info("Conflict on Run status update, let's try again.")
-			return ctrl.Result{RequeueAfter: time.Second * 3}, nil
-		}
-		return ctrl.Result{}, err
-	}
 	return ctrl.Result{}, nil
 }
 
