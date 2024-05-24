@@ -81,7 +81,7 @@ func (s *WithStackSuiteHelper) GetStackOutput(stack *v1beta1.Stack) (*v1.Secret,
 	secret := &v1.Secret{}
 	if err := s.Client().Get(s.Context(), types.NamespacedName{
 		Namespace: stack.Namespace,
-		Name:      "stack-output-" + stack.Status.Id,
+		Name:      "stack-output-" + stack.Name,
 	}, secret); err != nil {
 		return nil, err
 	}
