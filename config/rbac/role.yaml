@@ -45,6 +45,32 @@ rules:
 - apiGroups:
   - app.spacelift.io
   resources:
+  - spaces
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - app.spacelift.io
+  resources:
+  - spaces/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - app.spacelift.io
+  resources:
+  - spaces/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - app.spacelift.io
+  resources:
   - stacks
   verbs:
   - create

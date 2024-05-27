@@ -86,7 +86,6 @@ func (s *StackControllerSuite) TestStackCreation_InvalidSpec() {
 }
 
 func (s *StackControllerSuite) TestStackCreation_UnableToCreateOnSpacelift() {
-
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
 		Return(nil, spaceliftRepository.ErrStackNotFound)
 	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything).Once().
@@ -115,7 +114,6 @@ func (s *StackControllerSuite) TestStackCreation_UnableToCreateOnSpacelift() {
 }
 
 func (s *StackControllerSuite) TestStackCreation_OK() {
-
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
 		Return(nil, spaceliftRepository.ErrStackNotFound)
 	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything).Once().
@@ -151,7 +149,6 @@ func (s *StackControllerSuite) TestStackCreation_OK() {
 }
 
 func (s *StackControllerSuite) TestStackUpdate_UnableToUpdateOnSpacelift() {
-
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
 		Return(&models.Stack{
 			Id: "test-stack-generated-id",
@@ -182,7 +179,6 @@ func (s *StackControllerSuite) TestStackUpdate_UnableToUpdateOnSpacelift() {
 }
 
 func (s *StackControllerSuite) TestStackUpdate_OK() {
-
 	fakeStack := &models.Stack{
 		Id: "test-stack-generated-id",
 	}
