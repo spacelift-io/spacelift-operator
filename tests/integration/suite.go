@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	kubezap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
@@ -94,6 +95,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Logger: logger,
 		Scheme: scheme.Scheme,
+		Metrics: metricsserver.Options{
+			BindAddress: "0",
+		},
 	})
 	s.Require().NoError(err)
 
