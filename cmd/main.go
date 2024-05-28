@@ -111,8 +111,11 @@ func main() {
 	stackRepo := repository.NewStackRepository(mgr.GetClient(), mgr.GetScheme())
 	stackOutputRepo := repository.NewStackOutputRepository(mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor("stack-output-repository"))
 	spaceRepo := repository.NewSpaceRepository(mgr.GetClient())
+	contextRepo := repository.NewContextRepository(mgr.GetClient(), mgr.GetScheme())
+	secretRepo := repository.NewSecretRepository(mgr.GetClient())
 	spaceliftRunRepo := spaceliftRepository.NewRunRepository(mgr.GetClient())
 	spaceliftStackRepo := spaceliftRepository.NewStackRepository(mgr.GetClient())
+	spaceliftContextRepo := spaceliftRepository.NewContextRepository(mgr.GetClient())
 	runWatcher := watcher.NewRunWatcher(runRepo, spaceliftRunRepo)
 
 	if err = (&controller.RunReconciler{
@@ -139,6 +142,16 @@ func main() {
 		SpaceliftSpaceRepository: spaceliftRepository.NewSpaceRepository(mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Space")
+		os.Exit(1)
+	}
+	if err = (&controller.ContextReconciler{
+		ContextRepository:          contextRepo,
+		StackRepository:            stackRepo,
+		SpaceRepository:            spaceRepo,
+		SecretRepository:           secretRepo,
+		SpaceliftContextRepository: spaceliftContextRepo,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Context")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
