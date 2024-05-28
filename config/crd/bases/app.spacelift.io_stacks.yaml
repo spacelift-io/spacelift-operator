@@ -139,7 +139,15 @@ spec:
                   runnerImage:
                     type: string
                   space:
-                    type: string
+                    properties:
+                      spaceId:
+                        type: string
+                      spaceName:
+                        type: string
+                    type: object
+                    x-kubernetes-validations:
+                    - message: only one of spaceName or spaceId can be set
+                      rule: has(self.spaceName) != has(self.spaceId)
                   terraformVersion:
                     type: string
                   vcsIntegrationId:

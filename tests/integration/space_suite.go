@@ -30,9 +30,22 @@ func (s *WithSpaceSuiteHelper) CreateTestSpace() (*v1beta1.Space, error) {
 	if err := s.Client().Create(s.Context(), space); err != nil {
 		return nil, err
 	}
+
 	return space, nil
 }
+func (s *WithSpaceSuiteHelper) CreateTestSpaceWithStatus() (*v1beta1.Space, error) {
+	space, err := s.CreateTestSpace()
+	if err != nil {
+		return nil, err
+	}
 
+	space.Status = v1beta1.SpaceStatus{Id: "test-space-id"}
+	if err := s.Client().Status().Update(s.Context(), space); err != nil {
+		return nil, err
+	}
+
+	return space, nil
+}
 func (s *WithSpaceSuiteHelper) DeleteSpace(space *v1beta1.Space) {
 	err := s.Client().Delete(s.Context(), space)
 	s.Require().NoError(err)

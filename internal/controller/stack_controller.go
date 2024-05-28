@@ -22,6 +22,7 @@ import (
 
 	"github.com/pkg/errors"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -38,6 +39,7 @@ import (
 // StackReconciler reconciles a Stack object
 type StackReconciler struct {
 	StackRepository          *repository.StackRepository
+	SpaceRepository          *repository.SpaceRepository
 	SpaceliftStackRepository spaceliftRepository.StackRepository
 }
 
@@ -72,37 +74,47 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
 	}
 
+	spaceId := stack.Spec.Settings.Space.SpaceId
+
+	if spaceId == "" && stack.Spec.Settings.Space.SpaceName != "" {
+		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: stack.Spec.Settings.Space.SpaceName})
+		if err != nil {
+			if k8sErrors.IsNotFound(err) {
+				logger.V(logging.Level4).Info("Unable to find space for stack")
+				return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+			}
+			logger.Error(err, "Error fetching space for stack")
+			return ctrl.Result{}, err
+		}
+
+		// Race condition: space is created but status is not yet updated
+		if space.Status.Id == "" {
+			logger.V(logging.Level4).Info("Space is not yet created")
+			return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+		}
+
+		if len(stack.OwnerReferences) == 0 {
+			if err := r.StackRepository.SetOwner(ctx, stack, space); err != nil {
+				logger.Error(err, "Error setting owner for run stack.")
+				return ctrl.Result{}, err
+			}
+		}
+
+		spaceId = space.Status.Id
+	}
+
 	if errors.Is(err, spaceliftRepository.ErrStackNotFound) {
 		// Stack does not exist in Spacelift, let's create it
-		return r.handleCreateStack(ctx, stack)
+		return r.handleCreateStack(ctx, stack, spaceId)
 	}
 
-	return r.handleUpdateStack(ctx, stack)
+	return r.handleUpdateStack(ctx, stack, spaceId)
 }
 
-func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
+func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack, spaceId string) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
-	if err != nil {
-		logger.Error(err, "Unable to update the stack in spacelift")
-		// TODO: Implement better error handling and retry errors that could be retried
-		return ctrl.Result{}, nil
-	}
-
-	res, err := r.updateStackStatus(ctx, stack, *spaceliftUpdatedStack)
-
-	logger.WithValues(
-		logging.StackId, spaceliftUpdatedStack.Id,
-	).Info("Stack updated")
-
-	return res, err
-}
-
-func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
-
-	spaceliftStack, err := r.SpaceliftStackRepository.Create(ctx, stack)
+	spaceliftStack, err := r.SpaceliftStackRepository.Create(ctx, stack, spaceId)
 	if err != nil {
 		logger.Error(err, "Unable to create the stack in spacelift")
 		// TODO: Implement better error handling and retry errors that could be retried
@@ -130,6 +142,25 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 	logger.WithValues(
 		logging.StackId, spaceliftStack.Id,
 	).Info("Stack created")
+
+	return res, err
+}
+
+func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack, spaceId string) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack, spaceId)
+	if err != nil {
+		logger.Error(err, "Unable to update the stack in spacelift")
+		// TODO: Implement better error handling and retry errors that could be retried
+		return ctrl.Result{}, nil
+	}
+
+	res, err := r.updateStackStatus(ctx, stack, *spaceliftUpdatedStack)
+
+	logger.WithValues(
+		logging.StackId, spaceliftUpdatedStack.Id,
+	).Info("Stack updated")
 
 	return res, err
 }

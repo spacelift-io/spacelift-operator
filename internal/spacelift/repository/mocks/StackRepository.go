@@ -24,9 +24,9 @@ func (_m *StackRepository) EXPECT() *StackRepository_Expecter {
 	return &StackRepository_Expecter{mock: &_m.Mock}
 }
 
-// Create provides a mock function with given fields: _a0, _a1
-func (_m *StackRepository) Create(_a0 context.Context, _a1 *v1beta1.Stack) (*models.Stack, error) {
-	ret := _m.Called(_a0, _a1)
+// Create provides a mock function with given fields: _a0, _a1, _a2
+func (_m *StackRepository) Create(_a0 context.Context, _a1 *v1beta1.Stack, _a2 string) (*models.Stack, error) {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
@@ -34,19 +34,19 @@ func (_m *StackRepository) Create(_a0 context.Context, _a1 *v1beta1.Stack) (*mod
 
 	var r0 *models.Stack
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack) (*models.Stack, error)); ok {
-		return rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack, string) (*models.Stack, error)); ok {
+		return rf(_a0, _a1, _a2)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack) *models.Stack); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack, string) *models.Stack); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Stack)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *v1beta1.Stack) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, *v1beta1.Stack, string) error); ok {
+		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -62,13 +62,14 @@ type StackRepository_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 *v1beta1.Stack
-func (_e *StackRepository_Expecter) Create(_a0 interface{}, _a1 interface{}) *StackRepository_Create_Call {
-	return &StackRepository_Create_Call{Call: _e.mock.On("Create", _a0, _a1)}
+//   - _a2 string
+func (_e *StackRepository_Expecter) Create(_a0 interface{}, _a1 interface{}, _a2 interface{}) *StackRepository_Create_Call {
+	return &StackRepository_Create_Call{Call: _e.mock.On("Create", _a0, _a1, _a2)}
 }
 
-func (_c *StackRepository_Create_Call) Run(run func(_a0 context.Context, _a1 *v1beta1.Stack)) *StackRepository_Create_Call {
+func (_c *StackRepository_Create_Call) Run(run func(_a0 context.Context, _a1 *v1beta1.Stack, _a2 string)) *StackRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*v1beta1.Stack))
+		run(args[0].(context.Context), args[1].(*v1beta1.Stack), args[2].(string))
 	})
 	return _c
 }
@@ -78,7 +79,7 @@ func (_c *StackRepository_Create_Call) Return(_a0 *models.Stack, _a1 error) *Sta
 	return _c
 }
 
-func (_c *StackRepository_Create_Call) RunAndReturn(run func(context.Context, *v1beta1.Stack) (*models.Stack, error)) *StackRepository_Create_Call {
+func (_c *StackRepository_Create_Call) RunAndReturn(run func(context.Context, *v1beta1.Stack, string) (*models.Stack, error)) *StackRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -142,9 +143,9 @@ func (_c *StackRepository_Get_Call) RunAndReturn(run func(context.Context, *v1be
 	return _c
 }
 
-// Update provides a mock function with given fields: _a0, _a1
-func (_m *StackRepository) Update(_a0 context.Context, _a1 *v1beta1.Stack) (*models.Stack, error) {
-	ret := _m.Called(_a0, _a1)
+// Update provides a mock function with given fields: _a0, _a1, _a2
+func (_m *StackRepository) Update(_a0 context.Context, _a1 *v1beta1.Stack, _a2 string) (*models.Stack, error) {
+	ret := _m.Called(_a0, _a1, _a2)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
@@ -152,19 +153,19 @@ func (_m *StackRepository) Update(_a0 context.Context, _a1 *v1beta1.Stack) (*mod
 
 	var r0 *models.Stack
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack) (*models.Stack, error)); ok {
-		return rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack, string) (*models.Stack, error)); ok {
+		return rf(_a0, _a1, _a2)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack) *models.Stack); ok {
-		r0 = rf(_a0, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, *v1beta1.Stack, string) *models.Stack); ok {
+		r0 = rf(_a0, _a1, _a2)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Stack)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *v1beta1.Stack) error); ok {
-		r1 = rf(_a0, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, *v1beta1.Stack, string) error); ok {
+		r1 = rf(_a0, _a1, _a2)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -180,13 +181,14 @@ type StackRepository_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - _a0 context.Context
 //   - _a1 *v1beta1.Stack
-func (_e *StackRepository_Expecter) Update(_a0 interface{}, _a1 interface{}) *StackRepository_Update_Call {
-	return &StackRepository_Update_Call{Call: _e.mock.On("Update", _a0, _a1)}
+//   - _a2 string
+func (_e *StackRepository_Expecter) Update(_a0 interface{}, _a1 interface{}, _a2 interface{}) *StackRepository_Update_Call {
+	return &StackRepository_Update_Call{Call: _e.mock.On("Update", _a0, _a1, _a2)}
 }
 
-func (_c *StackRepository_Update_Call) Run(run func(_a0 context.Context, _a1 *v1beta1.Stack)) *StackRepository_Update_Call {
+func (_c *StackRepository_Update_Call) Run(run func(_a0 context.Context, _a1 *v1beta1.Stack, _a2 string)) *StackRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*v1beta1.Stack))
+		run(args[0].(context.Context), args[1].(*v1beta1.Stack), args[2].(string))
 	})
 	return _c
 }
@@ -196,7 +198,7 @@ func (_c *StackRepository_Update_Call) Return(_a0 *models.Stack, _a1 error) *Sta
 	return _c
 }
 
-func (_c *StackRepository_Update_Call) RunAndReturn(run func(context.Context, *v1beta1.Stack) (*models.Stack, error)) *StackRepository_Update_Call {
+func (_c *StackRepository_Update_Call) RunAndReturn(run func(context.Context, *v1beta1.Stack, string) (*models.Stack, error)) *StackRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
