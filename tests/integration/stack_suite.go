@@ -27,9 +27,7 @@ var DefaultValidStack = v1beta1.Stack{
 		Settings: v1beta1.StackInput{
 			Branch:     func() *string { v := "fake-branch"; return &v }(),
 			Repository: "fake-repository",
-			Space: v1beta1.StackSpace{
-				SpaceId: "fake-space",
-			},
+			SpaceId:    "fake-space",
 		},
 	},
 }
@@ -60,7 +58,10 @@ func (s *WithStackSuiteHelper) CreateTestStack() (*v1beta1.Stack, error) {
 
 func (s *WithStackSuiteHelper) CreateTestStackWithSpaceName(spaceName string) (*v1beta1.Stack, error) {
 	stack := DefaultValidStack
-	stack.Spec.Settings.Space = v1beta1.StackSpace{SpaceName: spaceName}
+
+	stack.Spec.Settings.SpaceId = ""
+	stack.Spec.Settings.SpaceName = spaceName
+
 	if err := s.Client().Create(s.Context(), &stack); err != nil {
 		return nil, err
 	}

@@ -31,52 +31,49 @@ type StackSpec struct {
 	CommitSHA *string `json:"commitSHA,omitempty"`
 }
 
+// +kubebuilder:validation:XValidation:rule="has(self.spaceName) != has(self.spaceId)",message="only one of spaceName or spaceId can be set"
 type StackInput struct {
-	AdditionalProjectGlobs *[]string `json:"additionalProjectGlobs,omitempty"`
-	Administrative         *bool     `json:"administrative,omitempty"`
-	AfterApply             *[]string `json:"afterApply,omitempty"`
-	AfterDestroy           *[]string `json:"afterDestroy,omitempty"`
-	AfterInit              *[]string `json:"afterInit,omitempty"`
-	AfterPerform           *[]string `json:"afterPerform,omitempty"`
-	AfterPlan              *[]string `json:"afterPlan,omitempty"`
-	AfterRun               *[]string `json:"afterRun,omitempty"`
-	Autodeploy             *bool     `json:"autodeploy,omitempty"`
-	Autoretry              *bool     `json:"autoretry,omitempty"`
-	BeforeApply            *[]string `json:"beforeApply,omitempty"`
-	BeforeDestroy          *[]string `json:"beforeDestroy,omitempty"`
-	BeforeInit             *[]string `json:"beforeInit,omitempty"`
-	BeforePerform          *[]string `json:"beforePerform,omitempty"`
-	BeforePlan             *[]string `json:"beforePlan,omitempty"`
-	Branch                 *string   `json:"branch,omitempty"`
-	Description            *string   `json:"description,omitempty"`
-	GitHubActionDeploy     *bool     `json:"githubActionDeploy,omitempty"`
-	IsDisabled             *bool     `json:"isDisabled,omitempty"`
-	Labels                 *[]string `json:"labels,omitempty"`
-	LocalPreviewEnabled    *bool     `json:"localPreviewEnabled,omitempty"`
-	ProjectRoot            *string   `json:"projectRoot,omitempty"`
-	ProtectFromDeletion    *bool     `json:"protectFromDeletion,omitempty"`
-	Provider               *string   `json:"provider,omitempty"`
-	Repository             string    `json:"repository"`
-	RepositoryURL          *string   `json:"repositoryURL,omitempty"`
-	RunnerImage            *string   `json:"runnerImage,omitempty"`
-	// +kubebuilder:validation:XValidation:rule="has(self.spaceName) != has(self.spaceId)",message="only one of spaceName or spaceId can be set"
-	Space            StackSpace    `json:"space,omitempty"`
-	TerraformVersion *string       `json:"terraformVersion,omitempty"`
-	VCSInteragrionID *string       `json:"vcsIntegrationId,omitempty"`
-	VendorConfig     *VendorConfig `json:"vendorConfig,omitempty"`
-	WorkerPool       *string       `json:"workerPool,omitempty"`
+	// +kubebuilder:validation:Optional
+	SpaceName string `json:"spaceName,omitempty"`
+	// +kubebuilder:validation:Optional
+	SpaceId string `json:"spaceId,omitempty"`
+
+	AdditionalProjectGlobs *[]string     `json:"additionalProjectGlobs,omitempty"`
+	Administrative         *bool         `json:"administrative,omitempty"`
+	AfterApply             *[]string     `json:"afterApply,omitempty"`
+	AfterDestroy           *[]string     `json:"afterDestroy,omitempty"`
+	AfterInit              *[]string     `json:"afterInit,omitempty"`
+	AfterPerform           *[]string     `json:"afterPerform,omitempty"`
+	AfterPlan              *[]string     `json:"afterPlan,omitempty"`
+	AfterRun               *[]string     `json:"afterRun,omitempty"`
+	Autodeploy             *bool         `json:"autodeploy,omitempty"`
+	Autoretry              *bool         `json:"autoretry,omitempty"`
+	BeforeApply            *[]string     `json:"beforeApply,omitempty"`
+	BeforeDestroy          *[]string     `json:"beforeDestroy,omitempty"`
+	BeforeInit             *[]string     `json:"beforeInit,omitempty"`
+	BeforePerform          *[]string     `json:"beforePerform,omitempty"`
+	BeforePlan             *[]string     `json:"beforePlan,omitempty"`
+	Branch                 *string       `json:"branch,omitempty"`
+	Description            *string       `json:"description,omitempty"`
+	GitHubActionDeploy     *bool         `json:"githubActionDeploy,omitempty"`
+	IsDisabled             *bool         `json:"isDisabled,omitempty"`
+	Labels                 *[]string     `json:"labels,omitempty"`
+	LocalPreviewEnabled    *bool         `json:"localPreviewEnabled,omitempty"`
+	ProjectRoot            *string       `json:"projectRoot,omitempty"`
+	ProtectFromDeletion    *bool         `json:"protectFromDeletion,omitempty"`
+	Provider               *string       `json:"provider,omitempty"`
+	Repository             string        `json:"repository"`
+	RepositoryURL          *string       `json:"repositoryURL,omitempty"`
+	RunnerImage            *string       `json:"runnerImage,omitempty"`
+	TerraformVersion       *string       `json:"terraformVersion,omitempty"`
+	VCSInteragrionID       *string       `json:"vcsIntegrationId,omitempty"`
+	VendorConfig           *VendorConfig `json:"vendorConfig,omitempty"`
+	WorkerPool             *string       `json:"workerPool,omitempty"`
 
 	AWSIntegration *AWSIntegration `json:"awsIntegration,omitempty"`
 
 	// In our API managesStateFile is not part of StackInput
 	ManagesStateFile *bool `json:"managesStateFile,omitempty"`
-}
-
-type StackSpace struct {
-	// +kubebuilder:validation:Optional
-	SpaceName string `json:"spaceName,omitempty"`
-	// +kubebuilder:validation:Optional
-	SpaceId string `json:"spaceId,omitempty"`
 }
 
 type VendorConfig struct {

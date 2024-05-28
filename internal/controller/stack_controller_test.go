@@ -66,7 +66,7 @@ func (s *StackControllerSuite) TestStackCreation_InvalidSpec() {
 		ExpectedErr string
 	}{
 		{
-			Spec:        v1beta1.StackSpec{Settings: v1beta1.StackInput{Space: v1beta1.StackSpace{SpaceName: "space-name"}}},
+			Spec:        v1beta1.StackSpec{Settings: v1beta1.StackInput{SpaceName: "space-name"}},
 			Name:        "missing name",
 			ExpectedErr: `Stack.app.spacelift.io "invalid-stack" is invalid: spec.name: Invalid value: "": spec.name in body should be at least 1 chars long`,
 		},
