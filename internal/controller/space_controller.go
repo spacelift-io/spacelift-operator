@@ -89,6 +89,8 @@ func (r *SpaceReconciler) handleCreateSpace(ctx context.Context, space *v1beta1.
 
 	space.Annotations[v1beta1.ArgoExternalLink] = spaceliftSpace.URL
 
+	space.SetHealthy()
+
 	// Updating annotations will not trigger another reconciliation loop
 	if err := r.SpaceRepository.Update(ctx, space); err != nil {
 		if k8sErrors.IsConflict(err) {

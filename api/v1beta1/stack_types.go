@@ -33,10 +33,8 @@ type StackSpec struct {
 
 // +kubebuilder:validation:XValidation:rule="has(self.spaceName) != has(self.spaceId)",message="only one of spaceName or spaceId can be set"
 type StackInput struct {
-	// +kubebuilder:validation:Optional
-	SpaceName string `json:"spaceName,omitempty"`
-	// +kubebuilder:validation:Optional
-	SpaceId string `json:"spaceId,omitempty"`
+	SpaceName *string `json:"spaceName,omitempty"`
+	SpaceId   *string `json:"spaceId,omitempty"`
 
 	AdditionalProjectGlobs *[]string     `json:"additionalProjectGlobs,omitempty"`
 	Administrative         *bool         `json:"administrative,omitempty"`

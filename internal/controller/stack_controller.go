@@ -76,8 +76,8 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	spaceId := stack.Spec.Settings.SpaceId
 
-	if spaceId == "" && stack.Spec.Settings.SpaceName != "" {
-		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: stack.Spec.Settings.SpaceName})
+	if spaceId == nil && stack.Spec.Settings.SpaceName != nil {
+		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: *stack.Spec.Settings.SpaceName})
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
 				logger.V(logging.Level4).Info("Unable to find space for stack")
@@ -87,28 +87,28 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			return ctrl.Result{}, err
 		}
 
-		// Race condition: space is created but status is not yet updated
-		if space.Status.Id == "" {
-			logger.V(logging.Level4).Info("Space is not yet created")
+		// Space is created but status is not yet updated
+		if !space.Ready() {
+			logger.Info("Space is not yet created, will retry in 3 seconds")
 			return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 		}
 
 		if len(stack.OwnerReferences) == 0 {
 			if err := r.StackRepository.SetOwner(ctx, stack, space); err != nil {
-				logger.Error(err, "Error setting owner for run stack.")
+				logger.Error(err, "Error setting owner for stack.")
 				return ctrl.Result{}, err
 			}
 		}
 
-		spaceId = space.Status.Id
+		spaceId = &space.Status.Id
 	}
 
 	if errors.Is(err, spaceliftRepository.ErrStackNotFound) {
 		// Stack does not exist in Spacelift, let's create it
-		return r.handleCreateStack(ctx, stack, spaceId)
+		return r.handleCreateStack(ctx, stack, *spaceId)
 	}
 
-	return r.handleUpdateStack(ctx, stack, spaceId)
+	return r.handleUpdateStack(ctx, stack, *spaceId)
 }
 
 func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack, spaceId string) (ctrl.Result, error) {

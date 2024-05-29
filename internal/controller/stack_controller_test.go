@@ -19,6 +19,7 @@ import (
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 	spaceliftRepository "github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/mocks"
+	"github.com/spacelift-io/spacelift-operator/internal/utils"
 	"github.com/spacelift-io/spacelift-operator/tests/integration"
 )
 
@@ -66,9 +67,14 @@ func (s *StackControllerSuite) TestStackCreation_InvalidSpec() {
 		ExpectedErr string
 	}{
 		{
-			Spec:        v1beta1.StackSpec{Settings: v1beta1.StackInput{SpaceName: "space-name"}},
+			Spec:        v1beta1.StackSpec{Settings: v1beta1.StackInput{SpaceName: utils.AddressOf("space-name")}},
 			Name:        "missing name",
 			ExpectedErr: `Stack.app.spacelift.io "invalid-stack" is invalid: spec.name: Invalid value: "": spec.name in body should be at least 1 chars long`,
+		},
+		{
+			Spec:        v1beta1.StackSpec{Name: "name", Settings: v1beta1.StackInput{}},
+			Name:        "missing name",
+			ExpectedErr: `Stack.app.spacelift.io "invalid-stack" is invalid: spec.settings: Invalid value: "object": only one of spaceName or spaceId can be set`,
 		},
 	}
 
@@ -154,6 +160,86 @@ func (s *StackControllerSuite) TestStackCreation_OK() {
 	s.Assert().Equal(logContext[logging.StackId], "test-stack-generated-id")
 }
 
+func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
+	space := &v1beta1.Space{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Space",
+			APIVersion: v1beta1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-space1",
+			Namespace: "default",
+		},
+		Spec: v1beta1.SpaceSpec{
+			Name:        "test-space1",
+			ParentSpace: "root",
+		},
+	}
+
+	space, err := s.CreateSpace(space)
+	s.Require().NoError(err)
+	defer s.DeleteSpace(space)
+
+	stack := &v1beta1.Stack{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Stack",
+			APIVersion: v1beta1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-stack",
+			Namespace: "default",
+		},
+		Spec: v1beta1.StackSpec{
+			Name: "test-stack",
+			Settings: v1beta1.StackInput{
+				Branch:     utils.AddressOf("fake-branch"),
+				Repository: "fake-repository",
+				SpaceName:  utils.AddressOf(space.Name),
+			},
+		},
+	}
+
+	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).
+		Return(nil, spaceliftRepository.ErrStackNotFound)
+
+	s.Logs.TakeAll()
+	stack, err = s.CreateStack(stack)
+	s.Require().NoError(err)
+	defer s.DeleteStack(stack)
+
+	var logs *observer.ObservedLogs
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Space is not yet created, will retry in 3 seconds")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+
+	s.Logs.TakeAll()
+
+	space.SetHealthy()
+	space.Status.Id = "test-space-generated-id"
+	err = s.SpaceRepo.UpdateStatus(s.Context(), space)
+	s.Require().NoError(err)
+
+	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything).Once().
+		Return(&models.Stack{
+			Id: "test-stack-generated-id",
+		}, nil)
+
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Stack created")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+
+	stack, err = s.StackRepo.Get(s.Context(), types.NamespacedName{
+		Namespace: stack.Namespace,
+		Name:      stack.Name,
+	})
+	s.Require().NoError(err)
+	s.Assert().Len(stack.OwnerReferences, 1)
+	s.Assert().Equal(space.Name, stack.OwnerReferences[0].Name)
+	s.Assert().Equal("Space", stack.OwnerReferences[0].Kind)
+}
+
 func (s *StackControllerSuite) TestStackCreationWithSpaceName_OK() {
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
 		Return(nil, spaceliftRepository.ErrStackNotFound)
@@ -167,7 +253,26 @@ func (s *StackControllerSuite) TestStackCreationWithSpaceName_OK() {
 	space, err := s.CreateTestSpaceWithStatus()
 	s.Require().NoError(err)
 
-	stack, err := s.CreateTestStackWithSpaceName(space.Name)
+	stack := &v1beta1.Stack{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Stack",
+			APIVersion: v1beta1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-stack",
+			Namespace: "default",
+		},
+		Spec: v1beta1.StackSpec{
+			Name: "test-stack",
+			Settings: v1beta1.StackInput{
+				Branch:     utils.AddressOf("fake-branch"),
+				Repository: "fake-repository",
+				SpaceName:  utils.AddressOf(space.Name),
+			},
+		},
+	}
+
+	stack, err = s.CreateStack(stack)
 	s.Require().NoError(err)
 	defer s.DeleteStack(stack)
 
