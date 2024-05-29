@@ -20,8 +20,8 @@ var (
 
 //go:generate mockery --with-expecter --name StackRepository
 type StackRepository interface {
-	Create(context.Context, *v1beta1.Stack, string) (*models.Stack, error)
-	Update(context.Context, *v1beta1.Stack, string) (*models.Stack, error)
+	Create(context.Context, *v1beta1.Stack) (*models.Stack, error)
+	Update(context.Context, *v1beta1.Stack) (*models.Stack, error)
 	Get(context.Context, *v1beta1.Stack) (*models.Stack, error)
 }
 
@@ -36,7 +36,7 @@ func NewStackRepository(client client.Client) *stackRepository {
 type CreateStackQuery struct {
 }
 
-func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack, spaceId string) (*models.Stack, error) {
+func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*models.Stack, error) {
 	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, stack.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating stack")
@@ -48,7 +48,7 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack, spac
 		} `graphql:"stackCreate(input: $input, manageState: $manageState)"`
 	}
 
-	stackInput := structs.FromStackSpec(stack.Spec, spaceId)
+	stackInput := structs.FromStackSpec(stack.Spec)
 	stackCreateMutationVars := map[string]interface{}{
 		"input":       stackInput,
 		"manageState": graphql.Boolean(true),
@@ -105,7 +105,7 @@ func (r *stackRepository) attachAWSIntegration(ctx context.Context, stack *v1bet
 	return nil
 }
 
-func (r *stackRepository) Update(ctx context.Context, stack *v1beta1.Stack, spaceId string) (*models.Stack, error) {
+func (r *stackRepository) Update(ctx context.Context, stack *v1beta1.Stack) (*models.Stack, error) {
 	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, stack.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while updating stack")
@@ -118,7 +118,7 @@ func (r *stackRepository) Update(ctx context.Context, stack *v1beta1.Stack, spac
 		} `graphql:"stackUpdate(id: $id, input: $input)"`
 	}
 
-	stackInput := structs.FromStackSpec(stack.Spec, spaceId)
+	stackInput := structs.FromStackSpec(stack.Spec)
 	vars := map[string]interface{}{
 		"id":    slug.SafeSlug(stack.Spec.Name),
 		"input": stackInput,

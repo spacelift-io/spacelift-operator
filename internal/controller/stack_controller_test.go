@@ -100,7 +100,7 @@ func (s *StackControllerSuite) TestStackCreation_InvalidSpec() {
 func (s *StackControllerSuite) TestStackCreation_UnableToCreateOnSpacelift() {
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
 		Return(nil, spaceliftRepository.ErrStackNotFound)
-	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything).Once().
+	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything).Once().
 		Return(nil, fmt.Errorf("unable to create resource on spacelift"))
 
 	s.Logs.TakeAll()
@@ -128,7 +128,7 @@ func (s *StackControllerSuite) TestStackCreation_UnableToCreateOnSpacelift() {
 func (s *StackControllerSuite) TestStackCreation_OK() {
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
 		Return(nil, spaceliftRepository.ErrStackNotFound)
-	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything).Once().
+	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything).Once().
 		Return(&models.Stack{
 			Id: "test-stack-generated-id",
 		}, nil)
@@ -161,24 +161,7 @@ func (s *StackControllerSuite) TestStackCreation_OK() {
 }
 
 func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
-	space := &v1beta1.Space{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Space",
-			APIVersion: v1beta1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-space1",
-			Namespace: "default",
-		},
-		Spec: v1beta1.SpaceSpec{
-			Name:        "test-space1",
-			ParentSpace: "root",
-		},
-	}
-
-	space, err := s.CreateSpace(space)
-	s.Require().NoError(err)
-	defer s.DeleteSpace(space)
+	spaceName := "test-space1"
 
 	stack := &v1beta1.Stack{
 		TypeMeta: metav1.TypeMeta{
@@ -194,7 +177,7 @@ func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
 			Settings: v1beta1.StackInput{
 				Branch:     utils.AddressOf("fake-branch"),
 				Repository: "fake-repository",
-				SpaceName:  utils.AddressOf(space.Name),
+				SpaceName:  utils.AddressOf(spaceName),
 			},
 		},
 	}
@@ -203,24 +186,49 @@ func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
 		Return(nil, spaceliftRepository.ErrStackNotFound)
 
 	s.Logs.TakeAll()
-	stack, err = s.CreateStack(stack)
+	stack, err := s.CreateStack(stack)
 	s.Require().NoError(err)
 	defer s.DeleteStack(stack)
 
 	var logs *observer.ObservedLogs
 	s.Require().Eventually(func() bool {
-		logs = s.Logs.FilterMessage("Space is not yet created, will retry in 3 seconds")
+		logs = s.Logs.FilterMessage("Unable to find space for stack")
 		return logs.Len() == 1
 	}, integration.DefaultTimeout, integration.DefaultInterval)
 
 	s.Logs.TakeAll()
 
-	space.SetHealthy()
+	space := &v1beta1.Space{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Space",
+			APIVersion: v1beta1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-space1",
+			Namespace: "default",
+		},
+		Spec: v1beta1.SpaceSpec{
+			Name:        spaceName,
+			ParentSpace: "root",
+		},
+	}
+
+	space, err = s.CreateSpace(space)
+	s.Require().NoError(err)
+	defer s.DeleteSpace(space)
+
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Space is not ready yet, will retry in 3 seconds")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+
+	s.Logs.TakeAll()
+
 	space.Status.Id = "test-space-generated-id"
 	err = s.SpaceRepo.UpdateStatus(s.Context(), space)
 	s.Require().NoError(err)
 
-	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything).Once().
+	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything).Once().
 		Return(&models.Stack{
 			Id: "test-stack-generated-id",
 		}, nil)
@@ -243,7 +251,7 @@ func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
 func (s *StackControllerSuite) TestStackCreationWithSpaceName_OK() {
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
 		Return(nil, spaceliftRepository.ErrStackNotFound)
-	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything, mock.Anything).Once().
+	s.FakeSpaceliftStackRepo.EXPECT().Create(mock.Anything, mock.Anything).Once().
 		Return(&models.Stack{
 			Id: "test-stack-generated-id",
 		}, nil)
@@ -252,6 +260,7 @@ func (s *StackControllerSuite) TestStackCreationWithSpaceName_OK() {
 
 	space, err := s.CreateTestSpaceWithStatus()
 	s.Require().NoError(err)
+	defer s.DeleteSpace(space)
 
 	stack := &v1beta1.Stack{
 		TypeMeta: metav1.TypeMeta{
@@ -303,7 +312,7 @@ func (s *StackControllerSuite) TestStackUpdate_UnableToUpdateOnSpacelift() {
 		Return(&models.Stack{
 			Id: "test-stack-generated-id",
 		}, nil)
-	s.FakeSpaceliftStackRepo.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Once().
+	s.FakeSpaceliftStackRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
 		Return(nil, fmt.Errorf("unable to update resource on spacelift"))
 
 	s.Logs.TakeAll()
@@ -335,7 +344,7 @@ func (s *StackControllerSuite) TestStackUpdate_OK() {
 
 	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
 		Return(fakeStack, nil)
-	s.FakeSpaceliftStackRepo.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Once().
+	s.FakeSpaceliftStackRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
 		Return(fakeStack, nil)
 
 	s.Logs.TakeAll()

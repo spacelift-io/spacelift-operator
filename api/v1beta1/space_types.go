@@ -46,16 +46,11 @@ type Space struct {
 }
 
 func (s *Space) Ready() bool {
-	return s.Status.Ready && s.Status.Id != ""
-}
-
-func (s *Space) SetHealthy() {
-	s.Status.Ready = true
+	return s.Status.Id != ""
 }
 
 type SpaceStatus struct {
-	Id    string `json:"id,omitempty"`
-	Ready bool   `json:"ready"`
+	Id string `json:"id,omitempty"`
 }
 
 func (s *Space) SetSpace(space models.Space) {

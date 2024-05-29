@@ -48,7 +48,7 @@ func (s *WithSpaceSuiteHelper) CreateTestSpaceWithStatus() (*v1beta1.Space, erro
 		return nil, err
 	}
 
-	space.Status = v1beta1.SpaceStatus{Id: "test-space-id", Ready: true}
+	space.Status = v1beta1.SpaceStatus{Id: "test-space-id"}
 	if err := s.Client().Status().Update(s.Context(), space); err != nil {
 		return nil, err
 	}

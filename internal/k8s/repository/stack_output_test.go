@@ -12,6 +12,7 @@ import (
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
+	"github.com/spacelift-io/spacelift-operator/internal/utils"
 	"github.com/spacelift-io/spacelift-operator/tests/integration"
 )
 
@@ -46,7 +47,8 @@ func (s *StackOutputRepositorySuite) TestUpdateOrCreateStackOutputSecret_OK_With
 			Name:      "foobar",
 		},
 		Spec: v1beta1.StackSpec{
-			Name: "foobar",
+			Name:     "foobar",
+			Settings: v1beta1.StackInput{SpaceId: utils.AddressOf("fake-space")},
 		},
 	}
 

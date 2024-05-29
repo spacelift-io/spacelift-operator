@@ -74,9 +74,7 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
 	}
 
-	spaceId := stack.Spec.Settings.SpaceId
-
-	if spaceId == nil && stack.Spec.Settings.SpaceName != nil {
+	if stack.Spec.Settings.SpaceName != nil {
 		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: *stack.Spec.Settings.SpaceName})
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
@@ -89,7 +87,7 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 		// Space is created but status is not yet updated
 		if !space.Ready() {
-			logger.Info("Space is not yet created, will retry in 3 seconds")
+			logger.Info("Space is not ready yet, will retry in 3 seconds")
 			return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 		}
 
@@ -100,25 +98,32 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			}
 		}
 
-		spaceId = &space.Status.Id
+		stack.Spec.Settings.SpaceId = &space.Status.Id
 	}
 
 	if errors.Is(err, spaceliftRepository.ErrStackNotFound) {
 		// Stack does not exist in Spacelift, let's create it
-		return r.handleCreateStack(ctx, stack, *spaceId)
+		return r.handleCreateStack(ctx, stack)
 	}
 
-	return r.handleUpdateStack(ctx, stack, *spaceId)
+	return r.handleUpdateStack(ctx, stack)
 }
 
-func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack, spaceId string) (ctrl.Result, error) {
+func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	spaceliftStack, err := r.SpaceliftStackRepository.Create(ctx, stack, spaceId)
+	spaceliftStack, err := r.SpaceliftStackRepository.Create(ctx, stack)
 	if err != nil {
 		logger.Error(err, "Unable to create the stack in spacelift")
 		// TODO: Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
+	}
+
+	// Refetch the stack to get the latest state.
+	stack, err = r.StackRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: stack.Name})
+	if err != nil {
+		logger.Error(err, "Unable to retrieve Stack from kube API.")
+		return ctrl.Result{}, err
 	}
 
 	// Set initial annotations when stack is created
@@ -146,10 +151,10 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 	return res, err
 }
 
-func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack, spaceId string) (ctrl.Result, error) {
+func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack, spaceId)
+	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
 	if err != nil {
 		logger.Error(err, "Unable to update the stack in spacelift")
 		// TODO: Implement better error handling and retry errors that could be retried
