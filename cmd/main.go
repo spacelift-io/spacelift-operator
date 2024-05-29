@@ -109,7 +109,7 @@ func main() {
 
 	runRepo := repository.NewRunRepository(mgr.GetClient(), mgr.GetScheme())
 	stackRepo := repository.NewStackRepository(mgr.GetClient())
-	stackOutputRepo := repository.NewStackOutputRepository(mgr.GetClient(), mgr.GetScheme())
+	stackOutputRepo := repository.NewStackOutputRepository(mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor("stack-output-repository"))
 	spaceliftRunRepo := spaceliftRepository.NewRunRepository(mgr.GetClient())
 	spaceliftStackRepo := spaceliftRepository.NewStackRepository(mgr.GetClient())
 	runWatcher := watcher.NewRunWatcher(runRepo, spaceliftRunRepo)

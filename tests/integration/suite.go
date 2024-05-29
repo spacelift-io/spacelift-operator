@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -65,8 +66,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	)
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 
+	_, filename, _, _ := runtime.Caller(0)
+	basePath := path.Join(path.Dir(filename), "..", "..")
 	s.testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
+		CRDDirectoryPaths:     []string{filepath.Join(basePath, "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
 
 		// The BinaryAssetsDirectory is only required if you want to run the tests directly
@@ -74,7 +77,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		// default path defined in controller-runtime which is /usr/local/kubebuilder/.
 		// Note that you must have the required binaries setup under the bin directory to perform
 		// the tests directly. When we run make test it will be setup and used automatically.
-		BinaryAssetsDirectory: filepath.Join("..", "..", "bin", "k8s",
+		BinaryAssetsDirectory: filepath.Join(basePath, "bin", "k8s",
 			fmt.Sprintf("1.28.0-%s-%s", runtime.GOOS, runtime.GOARCH)),
 	}
 

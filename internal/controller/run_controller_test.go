@@ -31,7 +31,7 @@ type RunControllerSuite struct {
 
 func (s *RunControllerSuite) SetupSuite() {
 	s.SetupManager = func(mgr manager.Manager) {
-		stackOutputRepo := repository.NewStackOutputRepository(mgr.GetClient(), mgr.GetScheme())
+		stackOutputRepo := repository.NewStackOutputRepository(mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor("stack-output-repository"))
 		s.RunRepo = repository.NewRunRepository(mgr.GetClient(), mgr.GetScheme())
 		s.FakeSpaceliftRunRepo = new(mocks.RunRepository)
 		s.FakeSpaceliftStackRepo = new(mocks.StackRepository)
