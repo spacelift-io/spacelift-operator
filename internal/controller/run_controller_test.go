@@ -35,7 +35,7 @@ func (s *RunControllerSuite) SetupSuite() {
 		s.RunRepo = repository.NewRunRepository(mgr.GetClient(), mgr.GetScheme())
 		s.FakeSpaceliftRunRepo = new(mocks.RunRepository)
 		s.FakeSpaceliftStackRepo = new(mocks.StackRepository)
-		s.StackRepo = repository.NewStackRepository(mgr.GetClient())
+		s.StackRepo = repository.NewStackRepository(mgr.GetClient(), mgr.GetScheme())
 		w := watcher.NewRunWatcher(s.RunRepo, s.FakeSpaceliftRunRepo)
 		err := (&controller.RunReconciler{
 			RunRepository:            s.RunRepo,

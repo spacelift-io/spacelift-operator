@@ -45,6 +45,10 @@ type Space struct {
 	Status SpaceStatus `json:"status,omitempty"`
 }
 
+func (s *Space) Ready() bool {
+	return s.Status.Id != ""
+}
+
 type SpaceStatus struct {
 	Id string `json:"id,omitempty"`
 }

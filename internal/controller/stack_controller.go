@@ -22,6 +22,7 @@ import (
 
 	"github.com/pkg/errors"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -38,6 +39,7 @@ import (
 // StackReconciler reconciles a Stack object
 type StackReconciler struct {
 	StackRepository          *repository.StackRepository
+	SpaceRepository          *repository.SpaceRepository
 	SpaceliftStackRepository spaceliftRepository.StackRepository
 }
 
@@ -72,31 +74,39 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
 	}
 
+	if stack.Spec.Settings.SpaceName != nil {
+		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: *stack.Spec.Settings.SpaceName})
+		if err != nil {
+			if k8sErrors.IsNotFound(err) {
+				logger.V(logging.Level4).Info("Unable to find space for stack")
+				return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+			}
+			logger.Error(err, "Error fetching space for stack")
+			return ctrl.Result{}, err
+		}
+
+		// Space is created but status is not yet updated
+		if !space.Ready() {
+			logger.Info("Space is not ready yet, will retry in 3 seconds")
+			return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+		}
+
+		if len(stack.OwnerReferences) == 0 {
+			if err := r.StackRepository.SetOwner(ctx, stack, space); err != nil {
+				logger.Error(err, "Error setting owner for stack.")
+				return ctrl.Result{}, err
+			}
+		}
+
+		stack.Spec.Settings.SpaceId = &space.Status.Id
+	}
+
 	if errors.Is(err, spaceliftRepository.ErrStackNotFound) {
 		// Stack does not exist in Spacelift, let's create it
 		return r.handleCreateStack(ctx, stack)
 	}
 
 	return r.handleUpdateStack(ctx, stack)
-}
-
-func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
-
-	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
-	if err != nil {
-		logger.Error(err, "Unable to update the stack in spacelift")
-		// TODO: Implement better error handling and retry errors that could be retried
-		return ctrl.Result{}, nil
-	}
-
-	res, err := r.updateStackStatus(ctx, stack, *spaceliftUpdatedStack)
-
-	logger.WithValues(
-		logging.StackId, spaceliftUpdatedStack.Id,
-	).Info("Stack updated")
-
-	return res, err
 }
 
 func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
@@ -107,6 +117,13 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 		logger.Error(err, "Unable to create the stack in spacelift")
 		// TODO: Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
+	}
+
+	// Refetch the stack to get the latest state.
+	stack, err = r.StackRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: stack.Name})
+	if err != nil {
+		logger.Error(err, "Unable to retrieve Stack from kube API.")
+		return ctrl.Result{}, err
 	}
 
 	// Set initial annotations when stack is created
@@ -130,6 +147,25 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 	logger.WithValues(
 		logging.StackId, spaceliftStack.Id,
 	).Info("Stack created")
+
+	return res, err
+}
+
+func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.Stack) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
+	if err != nil {
+		logger.Error(err, "Unable to update the stack in spacelift")
+		// TODO: Implement better error handling and retry errors that could be retried
+		return ctrl.Result{}, nil
+	}
+
+	res, err := r.updateStackStatus(ctx, stack, *spaceliftUpdatedStack)
+
+	logger.WithValues(
+		logging.StackId, spaceliftUpdatedStack.Id,
+	).Info("Stack updated")
 
 	return res, err
 }

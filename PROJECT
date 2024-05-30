@@ -24,4 +24,12 @@ resources:
   kind: Stack
   path: github.com/spacelift-io/spacelift-operator/api/v1beta1
   version: v1beta1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: app.spacelift.io
+  kind: Space
+  path: github.com/spacelift-io/spacelift-operator/api/v1beta1
+  version: v1beta1
 version: "3"

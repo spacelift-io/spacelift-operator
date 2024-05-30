@@ -55,11 +55,12 @@ type IntegrationTestSuite struct {
 
 func (s *IntegrationTestSuite) SetupSuite() {
 	logger := kubezap.New(
+		kubezap.Level(AllLogLevelEnabler{}),
 		kubezap.WriteTo(os.Stdout),
 		kubezap.UseDevMode(true),
 		kubezap.RawZapOpts(
 			zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-				zapCoreObserver, logs := observer.New(zapcore.InfoLevel)
+				zapCoreObserver, logs := observer.New(AllLogLevelEnabler{})
 				s.Logs = logs
 				return zapcore.NewTee(core, zapCoreObserver)
 			})),

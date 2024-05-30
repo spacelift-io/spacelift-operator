@@ -138,7 +138,9 @@ spec:
                     type: string
                   runnerImage:
                     type: string
-                  space:
+                  spaceId:
+                    type: string
+                  spaceName:
                     type: string
                   terraformVersion:
                     type: string
@@ -223,6 +225,9 @@ spec:
                 required:
                 - repository
                 type: object
+                x-kubernetes-validations:
+                - message: only one of spaceName or spaceId can be set
+                  rule: has(self.spaceName) != has(self.spaceId)
             required:
             - name
             - settings

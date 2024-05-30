@@ -108,8 +108,9 @@ func main() {
 	}
 
 	runRepo := repository.NewRunRepository(mgr.GetClient(), mgr.GetScheme())
-	stackRepo := repository.NewStackRepository(mgr.GetClient())
+	stackRepo := repository.NewStackRepository(mgr.GetClient(), mgr.GetScheme())
 	stackOutputRepo := repository.NewStackOutputRepository(mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor("stack-output-repository"))
+	spaceRepo := repository.NewSpaceRepository(mgr.GetClient())
 	spaceliftRunRepo := spaceliftRepository.NewRunRepository(mgr.GetClient())
 	spaceliftStackRepo := spaceliftRepository.NewStackRepository(mgr.GetClient())
 	runWatcher := watcher.NewRunWatcher(runRepo, spaceliftRunRepo)
@@ -127,13 +128,14 @@ func main() {
 	}
 	if err = (&controller.StackReconciler{
 		StackRepository:          stackRepo,
+		SpaceRepository:          spaceRepo,
 		SpaceliftStackRepository: spaceliftStackRepo,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Stack")
 		os.Exit(1)
 	}
 	if err = (&controller.SpaceReconciler{
-		SpaceRepository:          repository.NewSpaceRepository(mgr.GetClient()),
+		SpaceRepository:          spaceRepo,
 		SpaceliftSpaceRepository: spaceliftRepository.NewSpaceRepository(mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Space")

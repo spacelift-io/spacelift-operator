@@ -31,7 +31,11 @@ type StackSpec struct {
 	CommitSHA *string `json:"commitSHA,omitempty"`
 }
 
+// +kubebuilder:validation:XValidation:rule="has(self.spaceName) != has(self.spaceId)",message="only one of spaceName or spaceId can be set"
 type StackInput struct {
+	SpaceName *string `json:"spaceName,omitempty"`
+	SpaceId   *string `json:"spaceId,omitempty"`
+
 	AdditionalProjectGlobs *[]string     `json:"additionalProjectGlobs,omitempty"`
 	Administrative         *bool         `json:"administrative,omitempty"`
 	AfterApply             *[]string     `json:"afterApply,omitempty"`
@@ -59,7 +63,6 @@ type StackInput struct {
 	Repository             string        `json:"repository"`
 	RepositoryURL          *string       `json:"repositoryURL,omitempty"`
 	RunnerImage            *string       `json:"runnerImage,omitempty"`
-	Space                  *string       `json:"space,omitempty"`
 	TerraformVersion       *string       `json:"terraformVersion,omitempty"`
 	VCSInteragrionID       *string       `json:"vcsIntegrationId,omitempty"`
 	VendorConfig           *VendorConfig `json:"vendorConfig,omitempty"`

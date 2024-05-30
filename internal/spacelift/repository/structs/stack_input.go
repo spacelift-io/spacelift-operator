@@ -95,7 +95,6 @@ type TerraformInput struct {
 }
 
 func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
-
 	administrative := getGraphQLBoolean(stackSpec.Settings.Administrative)
 	if administrative == nil {
 		administrative = graphql.NewBoolean(false)
@@ -142,7 +141,7 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 	ret.Description = getGraphQLString(stackSpec.Settings.Description)
 	ret.Provider = getGraphQLString(stackSpec.Settings.Provider)
 	ret.Labels = getGraphQLStrings(stackSpec.Settings.Labels)
-	ret.Space = getGraphQLString(stackSpec.Settings.Space)
+	ret.Space = getGraphQLString(stackSpec.Settings.SpaceId)
 	ret.ProjectRoot = getGraphQLString(stackSpec.Settings.ProjectRoot)
 	ret.RunnerImage = getGraphQLString(stackSpec.Settings.RunnerImage)
 	ret.VendorConfig = getVendorConfig(stackSpec.Settings.VendorConfig)

@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
+	"github.com/spacelift-io/spacelift-operator/internal/utils"
 )
 
 type WithStackSuiteHelper struct {
@@ -25,8 +26,9 @@ var DefaultValidStack = v1beta1.Stack{
 	Spec: v1beta1.StackSpec{
 		Name: "test-stack",
 		Settings: v1beta1.StackInput{
-			Branch:     func() *string { v := "fake-branch"; return &v }(),
+			Branch:     utils.AddressOf("fake-branch"),
 			Repository: "fake-repository",
+			SpaceId:    utils.AddressOf("fake-space"),
 		},
 	},
 }
@@ -53,6 +55,14 @@ func (s *WithStackSuiteHelper) CreateTestStack() (*v1beta1.Stack, error) {
 	}
 	s.WaitUntilStackExists(&stack)
 	return &stack, nil
+}
+
+func (s *WithStackSuiteHelper) CreateStack(stack *v1beta1.Stack) (*v1beta1.Stack, error) {
+	if err := s.Client().Create(s.Context(), stack); err != nil {
+		return nil, err
+	}
+	s.WaitUntilStackExists(stack)
+	return stack, nil
 }
 
 func (s *WithStackSuiteHelper) WaitUntilStackExists(stack *v1beta1.Stack) bool {
