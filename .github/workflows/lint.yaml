@@ -1,19 +1,25 @@
-name: Lint
+name: 🤓 Lint
+
 on:
   push:
     branches: [ "main" ]
   pull_request:
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
+
 jobs:
   generate:
-    name: generated files
+    name: Generated files up to date
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: setup go
-        uses: ./.github/actions/setup-go/
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with: { go-version-file: 'go.mod'}
+
       - name: Make sure generated files are up to date
         run: |
           make generate
@@ -22,13 +28,17 @@ jobs:
             echo "Please run make generate and commit the changes."
             exit 1
           fi
+
   lint-manifest:
-    name: Manifests
+    name: Manifests up to date
     runs-on: ubuntu-latest-4-cores
     steps:
       - uses: actions/checkout@v4
-      - name: setup go
-        uses: ./.github/actions/setup-go/
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with: { go-version-file: 'go.mod'}
+
       - name: Make sure manifest are up to date
         run: |
           make manifests
@@ -37,13 +47,17 @@ jobs:
             echo "Please run make manifests and commit the changes."
             exit 1
           fi
+
   lint-go:
-    name: GO code
+    name: Go code
     runs-on: ubuntu-latest-4-cores
     steps:
       - uses: actions/checkout@v4
-      - name: setup go
-        uses: ./.github/actions/setup-go/
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with: { go-version-file: 'go.mod'}
+
       - name: Make sure go.mod and go.sum are up to date
         run: |
           go mod tidy
@@ -52,6 +66,7 @@ jobs:
             echo "Please run go mod tidy and commit the changes."
             exit 1
           fi
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:

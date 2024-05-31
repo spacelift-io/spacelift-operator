@@ -13,3 +13,27 @@ builds:
       - arm64
     ldflags:
       - -s -w -X github.com/spacelift-io/spacelift-operator/internal/build.Version={{.Version}}
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs(\\(.+?\\))?:"
+      - "^test(\\(.+?\\))?:"
+      - "^chore(\\(.+?\\))?:"
+      - "^refactor(\\(.+?\\))?:"
+
+release:
+  header: |
+    ## Installation
+
+    The latest container image can be found at `public.ecr.aws/spacelift/spacelift-operator:{{ .Tag }}`, and the latest set of manifests can be found at https://downloads.spacelift.io/spacelift-operator/{{ .Tag }}/manifests.yaml.
+
+    To install the controller, run the following command:
+
+    ```shell
+    kubectl apply -f https://downloads.spacelift.io/spacelift-operator/{{ .Tag }}/manifests.yaml
+    ```
+
+  extra_files:
+  - glob: ./build/manifests/manifests.yaml
