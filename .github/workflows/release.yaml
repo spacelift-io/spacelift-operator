@@ -1,0 +1,95 @@
+name: 🚀 Release
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: ["v*"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  # When pushing the image, we push two tags: 'latest', and a version-specific tag.
+  # For production, the version-specific tag will be the git tag used to trigger the release (e.g. v1.0.0).
+  # For preprod, the version-specific tag will be the git commit SHA.
+  # This leads to image URLs like the following:
+  #
+  # - public.ecr.aws/spacelift/spacelift-operator:latest
+  # - public.ecr.aws/spacelift/spacelift-operator:v1.0.0
+  # - public.ecr.aws/spacelift-dev/spacelift-operator:latest
+  # - public.ecr.aws/spacelift-dev/spacelift-operator:4a401298262dba5980ae808d953723a31fb6f785
+  IMAGE_SPECIFIC_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && format('{0}:{1}', secrets.PUBLIC_ECR_REPOSITORY_URL, github.ref_name) || format('{0}:{1}', secrets.PREPROD_PUBLIC_ECR_REPOSITORY_URL, github.sha) }}
+  IMAGE_LATEST: ${{ startsWith(github.ref, 'refs/tags/v') && format('{0}:{1}', secrets.PUBLIC_ECR_REPOSITORY_URL, 'latest') || format('{0}:{1}', secrets.PREPROD_PUBLIC_ECR_REPOSITORY_URL, 'latest') }}
+  DOWNLOADS_BUCKET_PATH: "spacelift-operator"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with: { go-version-file: 'go.mod'}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.AWS_ROLE_TO_ASSUME || secrets.PREPROD_AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900
+
+      - name: Log in to Amazon public ECR
+        run: aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate Kubernetes manifests
+        run: make controller-manifests
+        env:
+          # When building the manifests, we always use the specific version rather than latest.
+          # This means that if someone installs a new version of the manifests, it will automatically
+          # update to the new version without having to force a restart of the Deployment manually.
+          IMG: ${{ env.IMAGE_SPECIFIC_VERSION }}
+
+      - name: Create release
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          args: release --clean --snapshot=${{ !startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push the image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_LATEST }}
+            ${{ env.IMAGE_SPECIFIC_VERSION }}
+
+      - name: Upload the Kubernetes manifests to the Downloads bucket
+        run: |
+          aws s3 cp build/manifests/manifests.yaml s3://${DOWNLOADS_BUCKET_NAME}/${DOWNLOADS_BUCKET_PATH}/latest/manifests.yaml
+          ${{ startsWith(github.ref, 'refs/tags/v') && format('aws s3 cp build/manifests/manifests.yaml s3://{0}/{1}/{2}/manifests.yaml', env.DOWNLOADS_BUCKET_NAME, env.DOWNLOADS_BUCKET_PATH, github.ref_name) || '' }}
+        env:
+          DOWNLOADS_BUCKET_NAME: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.DOWNLOADS_S3_BUCKET_NAME || secrets.PREPROD_DOWNLOADS_S3_BUCKET_NAME }}
+
+      - name: Invalidate cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${DISTRIBUTION_ID}" \
+            --paths "/${DOWNLOADS_BUCKET_PATH}/*"
+        env:
+          DISTRIBUTION_ID: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.DOWNLOADS_CLOUDFRONT_DISTRIBUTION_ID || secrets.PREPROD_DOWNLOADS_CLOUDFRONT_DISTRIBUTION_ID }}
