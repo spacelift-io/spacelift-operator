@@ -4,4 +4,5 @@ resources:
 - _v1beta1_stack.yaml
 - _v1beta1_space.yaml
 - _v1beta1_context.yaml
+- _v1beta1_policy.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

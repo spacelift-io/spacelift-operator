@@ -28,6 +28,8 @@ const (
 	SpaceliftApiKeySecretKey   = "SPACELIFT_API_KEY_SECRET"   //nolint:gosec
 )
 
+var DefaultClient = GetSpaceliftClient
+
 func GetSpaceliftClient(ctx context.Context, client k8sclient.Client, namespace string) (Client, error) {
 	if spaceliftClient != nil {
 		return spaceliftClient, nil

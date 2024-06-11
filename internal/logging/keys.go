@@ -19,4 +19,7 @@ const (
 
 	ContextName = "context.name"
 	ContextId   = "context.id"
+
+	PolicyId           = "policy.id"
+	PolicyAttachmentId = "policy.attachment_id"
 )

@@ -7,6 +7,8 @@ import (
 )
 
 // Client abstracts away Spacelift's client API.
+//
+//go:generate mockery --with-expecter --name Client
 type Client interface {
 	// Query executes a single GraphQL query request.
 	Query(context.Context, interface{}, map[string]interface{}, ...graphql.RequestOption) error

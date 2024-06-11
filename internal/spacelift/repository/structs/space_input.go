@@ -20,6 +20,6 @@ func FromSpaceSpec(spec v1beta1.SpaceSpec) SpaceInput {
 		Description:     graphql.String(spec.Description),
 		InheritEntities: graphql.Boolean(spec.InheritEntities),
 		ParentSpace:     graphql.String(spec.ParentSpace),
-		Labels:          getGraphQLStrings(spec.Labels),
+		Labels:          GetGraphQLStrings(spec.Labels),
 	}
 }
