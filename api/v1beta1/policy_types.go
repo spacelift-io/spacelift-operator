@@ -23,8 +23,7 @@ import (
 )
 
 // PolicySpec defines the desired state of Policy
-// TODO Validate SpaceName and SpaceId fields
-// TODO Validate AttachedStacks and AttachedStacksIds fields
+// +kubebuilder:validation:XValidation:rule="(has(self.spaceName) != has(self.spaceId)) || (!has(self.spaceName) && !has(self.spaceId))",message="only one of spaceName or spaceId can be set"
 type PolicySpec struct {
 	// Name of the policy - should be unique in one account
 	// +kubebuilder:validation:MinLength=1

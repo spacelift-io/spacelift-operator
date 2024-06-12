@@ -101,6 +101,17 @@ func (s *PolicyControllerSuite) TestPolicyCreation_InvalidSpec() {
 			},
 			ExpectedErr: `Policy.app.spacelift.io "invalid-policy" is invalid: spec.type: Unsupported value: "FOOBAR": supported values: "ACCESS", "APPROVAL", "GIT_PUSH", "INITIALIZATION", "LOGIN", "PLAN", "TASK", "TRIGGER", "NOTIFICATION"`,
 		},
+		{
+			Name: "both stackName and stackId are set",
+			Spec: v1beta1.PolicySpec{
+				Name:      "test",
+				Body:      "test",
+				Type:      "ACCESS",
+				SpaceId:   utils.AddressOf("space-id"),
+				SpaceName: utils.AddressOf("space-name"),
+			},
+			ExpectedErr: `Policy.app.spacelift.io "invalid-policy" is invalid: spec: Invalid value: "object": only one of spaceName or spaceId can be set`,
+		},
 	}
 
 	for _, c := range cases {
