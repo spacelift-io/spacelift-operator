@@ -1,0 +1,13 @@
+apiVersion: app.spacelift.io/v1beta1
+kind: Space
+metadata:
+  labels:
+    app.kubernetes.io/name: spacelift-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: space-sample
+spec:
+  name: created-from-operator
+  parentSpace: root
+  inheritEntities: false
+  description: "This space was created from an operator"
+  labels: ["one", "two"]
