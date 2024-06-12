@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/pkg/errors"
@@ -114,14 +115,7 @@ func (r *PolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 				logger.Info("Stack is not ready, will retry in 3 seconds")
 				return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
 			}
-			stackAlreadySpecifiedInIds := false
-			for _, stacksId := range policy.Spec.AttachedStacksIds {
-				if stacksId == stack.Status.Id {
-					stackAlreadySpecifiedInIds = true
-					break
-				}
-			}
-			if !stackAlreadySpecifiedInIds {
+			if !slices.Contains(policy.Spec.AttachedStacksNames, stack.Status.Id) {
 				policy.Spec.AttachedStacksIds = append(policy.Spec.AttachedStacksIds, stack.Status.Id)
 			}
 		}

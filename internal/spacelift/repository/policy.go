@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"slices"
 
 	"github.com/pkg/errors"
 	"github.com/shurcooL/graphql"
@@ -197,10 +198,11 @@ func (*policyRepository) findStackToAttach(policy *v1beta1.Policy, attachedStack
 stacksToAttach:
 	for _, stacksId := range policy.Spec.AttachedStacksIds {
 		// Let's see if the stack is already attached
-		for _, attachedStack := range attachedStacks {
-			if attachedStack.StackId == stacksId {
-				continue stacksToAttach
-			}
+		if slices.ContainsFunc(
+			attachedStacks,
+			func(attachedStack attachedStack) bool { return attachedStack.StackId == stacksId },
+		) {
+			continue stacksToAttach
 		}
 		stacksToAttach = append(stacksToAttach, stacksId)
 	}
@@ -214,10 +216,8 @@ stacksToDetach:
 		if attachedStack.IsAutoAttached {
 			continue stacksToDetach
 		}
-		for _, stackId := range policy.Spec.AttachedStacksIds {
-			if attachedStack.StackId == stackId {
-				continue stacksToDetach
-			}
+		if slices.Contains(policy.Spec.AttachedStacksIds, attachedStack.StackId) {
+			continue stacksToDetach
 		}
 		attachmentsToDetach = append(attachmentsToDetach, attachedStack.Id)
 	}
