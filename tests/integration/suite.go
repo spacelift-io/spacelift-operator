@@ -44,13 +44,16 @@ type IntegrationTestSuite struct {
 	testEnv   *envtest.Environment
 	Logs      *observer.ObservedLogs
 
-	FakeSpaceliftRunRepo   *mocks.RunRepository
-	FakeSpaceliftStackRepo *mocks.StackRepository
-	FakeSpaceliftSpaceRepo *mocks.SpaceRepository
+	FakeSpaceliftRunRepo     *mocks.RunRepository
+	FakeSpaceliftStackRepo   *mocks.StackRepository
+	FakeSpaceliftSpaceRepo   *mocks.SpaceRepository
+	FakeSpaceliftContextRepo *mocks.ContextRepository
 
-	RunRepo   *repository.RunRepository
-	StackRepo *repository.StackRepository
-	SpaceRepo *repository.SpaceRepository
+	RunRepo     *repository.RunRepository
+	StackRepo   *repository.StackRepository
+	SpaceRepo   *repository.SpaceRepository
+	ContextRepo *repository.ContextRepository
+	SecretRepo  *repository.SecretRepository
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {

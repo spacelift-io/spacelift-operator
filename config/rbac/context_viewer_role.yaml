@@ -1,0 +1,27 @@
+# permissions for end users to view contexts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: context-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: spacelift-operator
+    app.kubernetes.io/part-of: spacelift-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: context-viewer-role
+rules:
+- apiGroups:
+  - app.spacelift.io
+  resources:
+  - contexts
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - app.spacelift.io
+  resources:
+  - contexts/status
+  verbs:
+  - get
