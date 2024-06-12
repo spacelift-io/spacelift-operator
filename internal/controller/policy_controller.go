@@ -61,7 +61,7 @@ func (r *PolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	// The Policy is removed, this should not happen because we filter out deletion events.
 	// This can't really hurt and makes the reconciliation logic a bit more straightforward to read
-	if err != nil && k8sErrors.IsNotFound(err) {
+	if k8sErrors.IsNotFound(err) {
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
