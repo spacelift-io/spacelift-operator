@@ -35,7 +35,6 @@ type PolicySpec struct {
 	// Type of the policy. Possible values are ACCESS, APPROVAL, GIT_PUSH, INITIALIZATION, LOGIN, PLAN, TASK, TRIGGER and NOTIFICATION.
 	// Deprecated values are STACK_ACCESS (use ACCESS instead), TASK_RUN (use TASK instead), and TERRAFORM_PLAN (use PLAN instead).
 	// +kubebuilder:validation:Enum:=ACCESS;APPROVAL;GIT_PUSH;INITIALIZATION;LOGIN;PLAN;TASK;TRIGGER;NOTIFICATION
-	// +kubebuilder:validation:MinLength=1
 	Type string `json:"type"`
 
 	// Description of the policy

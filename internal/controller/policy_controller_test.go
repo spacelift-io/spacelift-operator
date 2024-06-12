@@ -90,7 +90,7 @@ func (s *PolicyControllerSuite) TestPolicyCreation_InvalidSpec() {
 				Name: "test",
 				Body: "test",
 			},
-			ExpectedErr: `Policy.app.spacelift.io "invalid-policy" is invalid: [spec.type: Invalid value: "": spec.type in body should be at least 1 chars long, spec.type: Unsupported value: "": supported values: "ACCESS", "APPROVAL", "GIT_PUSH", "INITIALIZATION", "LOGIN", "PLAN", "TASK", "TRIGGER", "NOTIFICATION"]`,
+			ExpectedErr: `Policy.app.spacelift.io "invalid-policy" is invalid: spec.type: Unsupported value: "": supported values: "ACCESS", "APPROVAL", "GIT_PUSH", "INITIALIZATION", "LOGIN", "PLAN", "TASK", "TRIGGER", "NOTIFICATION"`,
 		},
 		{
 			Name: "invalid type",

@@ -81,7 +81,6 @@ spec:
                 - TASK
                 - TRIGGER
                 - NOTIFICATION
-                minLength: 1
                 type: string
             required:
             - body
