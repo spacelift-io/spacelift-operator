@@ -145,7 +145,7 @@ func (r *policyRepository) Update(ctx context.Context, policy *v1beta1.Policy) (
 		if err := c.Mutate(ctx, &detachMutation, map[string]any{
 			"id": attachmentId,
 		}); err != nil {
-			return nil, errors.Wrapf(err, "unable to remove attachement %s to policy %s", attachmentId, policyId)
+			return nil, errors.Wrapf(err, "unable to remove attachment %s to policy %s", attachmentId, policyId)
 		}
 		logger.WithValues(logging.PolicyAttachmentId, attachmentId).Info("Removed policy attachment")
 	}
