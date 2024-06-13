@@ -71,7 +71,11 @@ func (r *PolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	if policy.Spec.SpaceName != nil {
-		logger := logger.WithValues(logging.SpaceName, *policy.Spec.SpaceName)
+		logger := logger.WithValues(
+			logging.SpaceName, *policy.Spec.SpaceName,
+			logging.PolicyType, policy.Spec.Type,
+			logging.PolicyName, policy.Spec.Name,
+		)
 		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: policy.Namespace, Name: *policy.Spec.SpaceName})
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
