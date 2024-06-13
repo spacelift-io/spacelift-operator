@@ -211,13 +211,12 @@ stacksToAttach:
 
 func (*policyRepository) findStackToDetach(policy *v1beta1.Policy, attachedStacks []attachedStack) []string {
 	var attachmentsToDetach []string
-stacksToDetach:
 	for _, attachedStack := range attachedStacks {
 		if attachedStack.IsAutoAttached {
-			continue stacksToDetach
+			continue
 		}
 		if slices.Contains(policy.Spec.AttachedStacksIds, attachedStack.StackId) {
-			continue stacksToDetach
+			continue
 		}
 		attachmentsToDetach = append(attachmentsToDetach, attachedStack.Id)
 	}
