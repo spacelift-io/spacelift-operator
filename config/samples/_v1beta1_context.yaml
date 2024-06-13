@@ -1,0 +1,21 @@
+apiVersion: app.spacelift.io/v1beta1
+kind: Context
+metadata:
+  name: context-sample
+spec:
+  name: test
+  space: space-sample
+  attachments:
+    - stack: stack-sample
+  environment:
+    - id: foo
+      value: bar
+      description: "insecure"
+    - id: bar
+      valueFromSecret:
+        name: test-secret
+        key: test-value
+      description: "secure"
+  mountedFiles:
+    - id: bar
+      value: Zm9vCg==
