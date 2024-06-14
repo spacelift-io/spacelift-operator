@@ -59,6 +59,7 @@ func (s *RunControllerSuite) SetupSuite() {
 func (s *RunControllerSuite) SetupTest() {
 	s.FakeSpaceliftRunRepo.Test(s.T())
 	s.FakeSpaceliftStackRepo.Test(s.T())
+	s.IntegrationTestSuite.SetupTest()
 }
 
 func (s *RunControllerSuite) TearDownTest() {

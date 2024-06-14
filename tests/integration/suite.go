@@ -48,12 +48,14 @@ type IntegrationTestSuite struct {
 	FakeSpaceliftStackRepo   *mocks.StackRepository
 	FakeSpaceliftSpaceRepo   *mocks.SpaceRepository
 	FakeSpaceliftContextRepo *mocks.ContextRepository
+	FakeSpaceliftPolicyRepo  *mocks.PolicyRepository
 
 	RunRepo     *repository.RunRepository
 	StackRepo   *repository.StackRepository
 	SpaceRepo   *repository.SpaceRepository
 	ContextRepo *repository.ContextRepository
 	SecretRepo  *repository.SecretRepository
+	PolicyRepo  *repository.PolicyRepository
 }
 
 func (s *IntegrationTestSuite) SetupSuite() {
@@ -117,6 +119,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 		err := mgr.Start(s.ctx)
 		s.Require().NoError(err)
 	}()
+}
+
+func (s *IntegrationTestSuite) SetupTest() {
+	s.Logs.TakeAll()
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {

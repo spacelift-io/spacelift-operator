@@ -126,21 +126,21 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 		Repository:          graphql.String(repo),
 	}
 
-	ret.AddditionalProjectGlobs = getGraphQLStrings(stackSpec.Settings.AdditionalProjectGlobs)
-	ret.AfterApply = getGraphQLStrings(stackSpec.Settings.AfterApply)
-	ret.AfterDestroy = getGraphQLStrings(stackSpec.Settings.AfterDestroy)
-	ret.AfterInit = getGraphQLStrings(stackSpec.Settings.AfterInit)
-	ret.AfterPerform = getGraphQLStrings(stackSpec.Settings.AfterPerform)
-	ret.AfterPlan = getGraphQLStrings(stackSpec.Settings.AfterPlan)
-	ret.AfterRun = getGraphQLStrings(stackSpec.Settings.AfterRun)
-	ret.BeforeApply = getGraphQLStrings(stackSpec.Settings.BeforeApply)
-	ret.BeforeDestroy = getGraphQLStrings(stackSpec.Settings.BeforeDestroy)
-	ret.BeforeInit = getGraphQLStrings(stackSpec.Settings.BeforeInit)
-	ret.BeforePerform = getGraphQLStrings(stackSpec.Settings.BeforePerform)
-	ret.BeforePlan = getGraphQLStrings(stackSpec.Settings.BeforePlan)
+	ret.AddditionalProjectGlobs = GetGraphQLStrings(stackSpec.Settings.AdditionalProjectGlobs)
+	ret.AfterApply = GetGraphQLStrings(stackSpec.Settings.AfterApply)
+	ret.AfterDestroy = GetGraphQLStrings(stackSpec.Settings.AfterDestroy)
+	ret.AfterInit = GetGraphQLStrings(stackSpec.Settings.AfterInit)
+	ret.AfterPerform = GetGraphQLStrings(stackSpec.Settings.AfterPerform)
+	ret.AfterPlan = GetGraphQLStrings(stackSpec.Settings.AfterPlan)
+	ret.AfterRun = GetGraphQLStrings(stackSpec.Settings.AfterRun)
+	ret.BeforeApply = GetGraphQLStrings(stackSpec.Settings.BeforeApply)
+	ret.BeforeDestroy = GetGraphQLStrings(stackSpec.Settings.BeforeDestroy)
+	ret.BeforeInit = GetGraphQLStrings(stackSpec.Settings.BeforeInit)
+	ret.BeforePerform = GetGraphQLStrings(stackSpec.Settings.BeforePerform)
+	ret.BeforePlan = GetGraphQLStrings(stackSpec.Settings.BeforePlan)
 	ret.Description = getGraphQLString(stackSpec.Settings.Description)
 	ret.Provider = getGraphQLString(stackSpec.Settings.Provider)
-	ret.Labels = getGraphQLStrings(stackSpec.Settings.Labels)
+	ret.Labels = GetGraphQLStrings(stackSpec.Settings.Labels)
 	ret.Space = getGraphQLString(stackSpec.Settings.SpaceId)
 	ret.ProjectRoot = getGraphQLString(stackSpec.Settings.ProjectRoot)
 	ret.RunnerImage = getGraphQLString(stackSpec.Settings.RunnerImage)
@@ -156,19 +156,6 @@ func getGraphQLBoolean(input *bool) *graphql.Boolean {
 	}
 
 	return graphql.NewBoolean(graphql.Boolean(*input))
-}
-
-func getGraphQLStrings(input *[]string) *[]graphql.String {
-	if input == nil {
-		return nil
-	}
-
-	var ret []graphql.String
-	for _, s := range *input {
-		ret = append(ret, graphql.String(s))
-	}
-
-	return &ret
 }
 
 func getGraphQLString(input *string) *graphql.String {

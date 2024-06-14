@@ -113,9 +113,11 @@ func main() {
 	spaceRepo := repository.NewSpaceRepository(mgr.GetClient())
 	contextRepo := repository.NewContextRepository(mgr.GetClient(), mgr.GetScheme())
 	secretRepo := repository.NewSecretRepository(mgr.GetClient())
+	policyRepo := repository.NewPolicyRepository(mgr.GetClient(), mgr.GetScheme())
 	spaceliftRunRepo := spaceliftRepository.NewRunRepository(mgr.GetClient())
 	spaceliftStackRepo := spaceliftRepository.NewStackRepository(mgr.GetClient())
 	spaceliftContextRepo := spaceliftRepository.NewContextRepository(mgr.GetClient())
+	spaceliftPolicyRepo := spaceliftRepository.NewPolicyRepository(mgr.GetClient())
 	runWatcher := watcher.NewRunWatcher(runRepo, spaceliftRunRepo)
 
 	if err = (&controller.RunReconciler{
@@ -152,6 +154,15 @@ func main() {
 		SpaceliftContextRepository: spaceliftContextRepo,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Context")
+		os.Exit(1)
+	}
+	if err = (&controller.PolicyReconciler{
+		StackRepository:           stackRepo,
+		PolicyRepository:          policyRepo,
+		SpaceRepository:           spaceRepo,
+		SpaceliftPolicyRepository: spaceliftPolicyRepo,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Policy")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

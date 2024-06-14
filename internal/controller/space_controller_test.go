@@ -5,6 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap/zaptest/observer"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
 	"github.com/spacelift-io/spacelift-operator/internal/controller"
 	"github.com/spacelift-io/spacelift-operator/internal/k8s/repository"
@@ -13,12 +20,6 @@ import (
 	spaceliftRepository "github.com/spacelift-io/spacelift-operator/internal/spacelift/repository"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/mocks"
 	"github.com/spacelift-io/spacelift-operator/tests/integration"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest/observer"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 type SpaceControllerSuite struct {
@@ -44,6 +45,7 @@ func (s *SpaceControllerSuite) SetupSuite() {
 
 func (s *SpaceControllerSuite) SetupTest() {
 	s.FakeSpaceliftSpaceRepo.Test(s.T())
+	s.IntegrationTestSuite.SetupTest()
 }
 
 func (s *SpaceControllerSuite) TearDownTest() {

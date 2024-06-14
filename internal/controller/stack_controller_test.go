@@ -52,6 +52,7 @@ func (s *StackControllerSuite) SetupSuite() {
 
 func (s *StackControllerSuite) SetupTest() {
 	s.FakeSpaceliftStackRepo.Test(s.T())
+	s.IntegrationTestSuite.SetupTest()
 }
 
 func (s *StackControllerSuite) TearDownTest() {
