@@ -6,16 +6,23 @@ spec:
   name: test
   space: space-sample
   attachments:
-    - stack: stack-sample
+    - { stack: stack-sample }
   environment:
     - id: foo
       value: bar
       description: "insecure"
     - id: bar
       valueFromSecret:
-        name: test-secret
+        name: secret-sample
         key: test-value
       description: "secure"
   mountedFiles:
     - id: bar
       value: Zm9vCg==
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-sample
+data:
+  test-value: c2VjcmV0IHN0cmluZwo=
