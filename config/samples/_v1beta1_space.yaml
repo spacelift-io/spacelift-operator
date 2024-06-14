@@ -3,8 +3,5 @@ kind: Space
 metadata:
   name: space-sample
 spec:
-  name: created from operator
+  name: my test space
   parentSpace: root
-  inheritEntities: false
-  description: "This space was created from an operator"
-  labels: ["one", "two"]

@@ -1,12 +1,6 @@
 apiVersion: app.spacelift.io/v1beta1
 kind: Run
 metadata:
-  labels:
-    app.kubernetes.io/name: run
-    app.kubernetes.io/instance: run-sample
-    app.kubernetes.io/part-of: spacelift-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: spacelift-operator
   name: run-sample
 spec:
   stackName: stack-sample
