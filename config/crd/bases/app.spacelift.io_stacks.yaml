@@ -122,7 +122,6 @@ spec:
                 description: In our API managesStateFile is not part of StackInput
                 type: boolean
               name:
-                minLength: 1
                 type: string
               projectRoot:
                 type: string
@@ -221,7 +220,6 @@ spec:
               workerPool:
                 type: string
             required:
-            - name
             - repository
             type: object
             x-kubernetes-validations:

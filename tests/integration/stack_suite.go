@@ -24,7 +24,6 @@ var DefaultValidStack = v1beta1.Stack{
 		Namespace: "default",
 	},
 	Spec: v1beta1.StackSpec{
-		Name:       "test-stack",
 		Branch:     utils.AddressOf("fake-branch"),
 		Repository: "fake-repository",
 		SpaceId:    utils.AddressOf("fake-space"),
@@ -66,7 +65,7 @@ func (s *WithStackSuiteHelper) CreateStack(stack *v1beta1.Stack) (*v1beta1.Stack
 func (s *WithStackSuiteHelper) WaitUntilStackExists(stack *v1beta1.Stack) bool {
 	return s.Eventually(func() bool {
 		st := &v1beta1.Stack{}
-		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: stack.Namespace, Name: stack.Name}, st)
+		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: stack.Namespace, Name: stack.ObjectMeta.Name}, st)
 		return err == nil
 	}, DefaultTimeout, DefaultInterval)
 }
@@ -80,7 +79,7 @@ func (s *WithStackSuiteHelper) DeleteStack(stack *v1beta1.Stack) {
 func (s *WithStackSuiteHelper) WaitUntilStackRemoved(stack *v1beta1.Stack) bool {
 	return s.Eventually(func() bool {
 		st := &v1beta1.Stack{}
-		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: stack.Namespace, Name: stack.Name}, st)
+		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: stack.Namespace, Name: stack.ObjectMeta.Name}, st)
 		return k8sErrors.IsNotFound(err)
 	}, DefaultTimeout, DefaultInterval)
 }
@@ -89,7 +88,7 @@ func (s *WithStackSuiteHelper) GetStackOutput(stack *v1beta1.Stack) (*v1.Secret,
 	secret := &v1.Secret{}
 	if err := s.Client().Get(s.Context(), types.NamespacedName{
 		Namespace: stack.Namespace,
-		Name:      "stack-output-" + stack.Name,
+		Name:      "stack-output-" + stack.ObjectMeta.Name,
 	}, secret); err != nil {
 		return nil, err
 	}

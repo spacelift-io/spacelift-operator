@@ -42,7 +42,7 @@ func (r *spaceRepository) Create(ctx context.Context, space *v1beta1.Space) (*mo
 		} `graphql:"spaceCreate(input: $input)"`
 	}
 
-	spaceCreationVars := map[string]any{"input": structs.FromSpaceSpec(space.Spec)}
+	spaceCreationVars := map[string]any{"input": structs.FromSpaceSpec(space)}
 
 	if err := c.Mutate(ctx, &mutation, spaceCreationVars); err != nil {
 		return nil, errors.Wrap(err, "unable to create space")
@@ -68,7 +68,7 @@ func (r *spaceRepository) Update(ctx context.Context, space *v1beta1.Space) (*mo
 
 	spaceUpdateVars := map[string]any{
 		"space": graphql.ID(space.Status.Id),
-		"input": structs.FromSpaceSpec(space.Spec),
+		"input": structs.FromSpaceSpec(space),
 	}
 
 	if err := c.Mutate(ctx, &spaceUpdateMutation, spaceUpdateVars); err != nil {

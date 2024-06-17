@@ -48,7 +48,7 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 		} `graphql:"stackCreate(input: $input, manageState: $manageState)"`
 	}
 
-	stackInput := structs.FromStackSpec(stack.Spec)
+	stackInput := structs.FromStackSpec(stack)
 	stackCreateMutationVars := map[string]interface{}{
 		"input":       stackInput,
 		"manageState": graphql.Boolean(true),
@@ -118,9 +118,9 @@ func (r *stackRepository) Update(ctx context.Context, stack *v1beta1.Stack) (*mo
 		} `graphql:"stackUpdate(id: $id, input: $input)"`
 	}
 
-	stackInput := structs.FromStackSpec(stack.Spec)
+	stackInput := structs.FromStackSpec(stack)
 	vars := map[string]interface{}{
-		"id":    slug.SafeSlug(stack.Spec.Name),
+		"id":    slug.SafeSlug(stack.Name()),
 		"input": stackInput,
 	}
 
@@ -151,7 +151,7 @@ func (r *stackRepository) Get(ctx context.Context, stack *v1beta1.Stack) (*model
 		} `graphql:"stack(id: $stackId)"`
 	}
 	vars := map[string]any{
-		"stackId": graphql.ID(slug.SafeSlug(stack.Spec.Name)),
+		"stackId": graphql.ID(slug.SafeSlug(stack.Name())),
 	}
 	if err := c.Query(ctx, &query, vars); err != nil {
 		return nil, errors.Wrap(err, "unable to get stack")

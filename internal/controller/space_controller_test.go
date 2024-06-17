@@ -61,16 +61,7 @@ func (s *SpaceControllerSuite) TestSpaceCreation_InvalidSpec() {
 		ExpectedErr string
 	}{
 		{
-			Spec: v1beta1.SpaceSpec{
-				ParentSpace: "root",
-			},
-			Name:        "missing name",
-			ExpectedErr: `Space.app.spacelift.io "invalid-space" is invalid: spec.name: Invalid value: "": spec.name in body should be at least 1 chars long`,
-		},
-		{
-			Spec: v1beta1.SpaceSpec{
-				Name: "child-space",
-			},
+			Spec:        v1beta1.SpaceSpec{},
 			Name:        "missing parentSpace",
 			ExpectedErr: `Space.app.spacelift.io "invalid-space" is invalid: spec.parentSpace: Invalid value: "": spec.parentSpace in body should be at least 1 chars long`,
 		},
@@ -110,7 +101,7 @@ func (s *SpaceControllerSuite) TestSpaceCreation_UnableToCreateOnSpacelift() {
 	s.Require().Never(func() bool {
 		space, err := s.SpaceRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: space.Namespace,
-			Name:      space.Name,
+			Name:      space.ObjectMeta.Name,
 		})
 		s.Require().NoError(err)
 		return space.Status.Id != ""
@@ -140,7 +131,7 @@ func (s *SpaceControllerSuite) TestSpaceCreation_Success() {
 	s.Require().Eventually(func() bool {
 		space, err := s.SpaceRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: space.Namespace,
-			Name:      space.Name,
+			Name:      space.ObjectMeta.Name,
 		})
 		s.Require().NoError(err)
 		return space.Status.Id == "test-space-generated-id"
@@ -175,7 +166,7 @@ func (s *SpaceControllerSuite) TestSpaceUpdate_UnableToUpdateOnSpacelift() {
 	s.Require().Never(func() bool {
 		space, err := s.SpaceRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: space.Namespace,
-			Name:      space.Name,
+			Name:      space.ObjectMeta.Name,
 		})
 		s.Require().NoError(err)
 		return space.Status.Id != ""

@@ -26,8 +26,7 @@ import (
 // +kubebuilder:validation:XValidation:rule="(has(self.spaceName) != has(self.spaceId)) || (!has(self.spaceName) && !has(self.spaceId))",message="only one of spaceName or spaceId can be set"
 type PolicySpec struct {
 	// Name of the policy - should be unique in one account
-	// +kubebuilder:validation:MinLength=1
-	Name string `json:"name"`
+	Name *string `json:"name,omitempty"`
 	// Body of the policy
 	// +kubebuilder:validation:MinLength=1
 	Body string `json:"body"`
@@ -64,6 +63,13 @@ type Policy struct {
 
 	Spec   PolicySpec   `json:"spec,omitempty"`
 	Status PolicyStatus `json:"status,omitempty"`
+}
+
+func (p *Policy) Name() string {
+	if p.Spec.Name != nil {
+		return *p.Spec.Name
+	}
+	return p.ObjectMeta.Name
 }
 
 func (p *Policy) SetPolicy(policy models.Policy) {

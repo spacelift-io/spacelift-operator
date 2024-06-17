@@ -23,7 +23,6 @@ func (s *WithSpaceSuiteHelper) CreateTestSpace() (*v1beta1.Space, error) {
 			Namespace: "default",
 		},
 		Spec: v1beta1.SpaceSpec{
-			Name:        "test-space",
 			ParentSpace: "root",
 		},
 	}
@@ -64,7 +63,7 @@ func (s *WithSpaceSuiteHelper) DeleteSpace(space *v1beta1.Space) {
 func (s *WithSpaceSuiteHelper) WaitUntilSpaceRemoved(space *v1beta1.Space) {
 	s.Eventually(func() bool {
 		st := &v1beta1.Space{}
-		err := s.Client().Get(s.Context(), types.NamespacedName{Name: space.Name, Namespace: space.Namespace}, st)
+		err := s.Client().Get(s.Context(), types.NamespacedName{Name: space.ObjectMeta.Name, Namespace: space.Namespace}, st)
 		return k8sErrors.IsNotFound(err)
 	}, DefaultTimeout, DefaultInterval)
 }

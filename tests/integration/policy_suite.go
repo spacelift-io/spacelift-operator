@@ -16,7 +16,6 @@ var DefaultValidPolicy = v1beta1.Policy{
 		Namespace:    "default",
 	},
 	Spec: v1beta1.PolicySpec{
-		Name: "test policy",
 		Body: "package spacelift",
 		Type: "PLAN",
 	},

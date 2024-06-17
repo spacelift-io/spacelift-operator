@@ -69,17 +69,8 @@ func (s *PolicyControllerSuite) TestPolicyCreation_InvalidSpec() {
 		ExpectedErr string
 	}{
 		{
-			Name: "empty name",
-			Spec: v1beta1.PolicySpec{
-				Body: "test",
-				Type: "ACCESS",
-			},
-			ExpectedErr: `Policy.app.spacelift.io "invalid-policy" is invalid: spec.name: Invalid value: "": spec.name in body should be at least 1 chars long`,
-		},
-		{
 			Name: "empty body",
 			Spec: v1beta1.PolicySpec{
-				Name: "test",
 				Type: "ACCESS",
 			},
 			ExpectedErr: `Policy.app.spacelift.io "invalid-policy" is invalid: spec.body: Invalid value: "": spec.body in body should be at least 1 chars long`,
@@ -87,7 +78,6 @@ func (s *PolicyControllerSuite) TestPolicyCreation_InvalidSpec() {
 		{
 			Name: "empty type",
 			Spec: v1beta1.PolicySpec{
-				Name: "test",
 				Body: "test",
 			},
 			ExpectedErr: `Policy.app.spacelift.io "invalid-policy" is invalid: spec.type: Unsupported value: "": supported values: "ACCESS", "APPROVAL", "GIT_PUSH", "INITIALIZATION", "LOGIN", "PLAN", "TASK", "TRIGGER", "NOTIFICATION"`,
@@ -95,7 +85,6 @@ func (s *PolicyControllerSuite) TestPolicyCreation_InvalidSpec() {
 		{
 			Name: "invalid type",
 			Spec: v1beta1.PolicySpec{
-				Name: "test",
 				Body: "test",
 				Type: "FOOBAR",
 			},
@@ -104,7 +93,6 @@ func (s *PolicyControllerSuite) TestPolicyCreation_InvalidSpec() {
 		{
 			Name: "both stackName and stackId are set",
 			Spec: v1beta1.PolicySpec{
-				Name:      "test",
 				Body:      "test",
 				Type:      "ACCESS",
 				SpaceId:   utils.AddressOf("space-id"),
@@ -147,7 +135,7 @@ func (s *PolicyControllerSuite) TestPolicyCreation_UnableToCreateOnSpacelift() {
 	s.Require().Never(func() bool {
 		policy, err := s.PolicyRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: policy.Namespace,
-			Name:      policy.Name,
+			Name:      policy.ObjectMeta.Name,
 		})
 		s.Require().NoError(err)
 		return policy.Status.Id != ""
@@ -277,7 +265,7 @@ func (s *PolicyControllerSuite) TestPolicyCreation_OK() {
 
 	policy, err = s.PolicyRepo.Get(s.Context(), types.NamespacedName{
 		Namespace: policy.Namespace,
-		Name:      policy.Name,
+		Name:      policy.ObjectMeta.Name,
 	})
 	s.Require().NoError(err)
 	s.Assert().Equal("test-policy-id", policy.Status.Id)
@@ -303,7 +291,7 @@ func (s *PolicyControllerSuite) TestPolicyUpdate_OK() {
 
 	policy, err = s.PolicyRepo.Get(s.Context(), types.NamespacedName{
 		Namespace: policy.Namespace,
-		Name:      policy.Name,
+		Name:      policy.ObjectMeta.Name,
 	})
 	s.Require().NoError(err)
 	s.Assert().Equal("test-policy-id", policy.Status.Id)

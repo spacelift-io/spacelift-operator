@@ -43,13 +43,11 @@ spec:
                   type: string
                 type: array
               name:
-                minLength: 1
                 type: string
               parentSpace:
                 minLength: 1
                 type: string
             required:
-            - name
             - parentSpace
             type: object
           status:

@@ -120,7 +120,7 @@ func (r *StackReconciler) handleCreateStack(ctx context.Context, stack *v1beta1.
 	}
 
 	// Refetch the stack to get the latest state.
-	stack, err = r.StackRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: stack.Name})
+	stack, err = r.StackRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: stack.ObjectMeta.Name})
 	if err != nil {
 		logger.Error(err, "Unable to retrieve Stack from kube API.")
 		return ctrl.Result{}, err

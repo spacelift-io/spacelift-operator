@@ -72,8 +72,7 @@ type Attachment struct {
 // ContextSpec defines the desired state of Context
 // +kubebuilder:validation:XValidation:message=only one of space or spaceId should be set,rule=has(self.spaceId) != has(self.space)
 type ContextSpec struct {
-	// +kubebuilder:validation:MinLength=1
-	Name string `json:"name"`
+	Name *string `json:"name,omitempty"`
 	// +kubebuilder:validation:MinLength=1
 	SpaceId *string `json:"spaceId,omitempty"`
 	// +kubebuilder:validation:MinLength=1
@@ -102,6 +101,13 @@ type Context struct {
 
 	Spec   ContextSpec   `json:"spec,omitempty"`
 	Status ContextStatus `json:"status,omitempty"`
+}
+
+func (c *Context) Name() string {
+	if c.Spec.Name != nil {
+		return *c.Spec.Name
+	}
+	return c.ObjectMeta.Name
 }
 
 func (c *Context) SetContext(context *models.Context) {

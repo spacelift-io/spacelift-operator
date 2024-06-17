@@ -75,7 +75,7 @@ func (r *policyRepository) Create(ctx context.Context, policy *v1beta1.Policy) (
 
 	var mutation policyCreateMutation
 	creationVars := map[string]any{
-		"name":   graphql.String(policy.Spec.Name),
+		"name":   graphql.String(policy.Name()),
 		"body":   graphql.String(policy.Spec.Body),
 		"type":   PolicyType(policy.Spec.Type),
 		"labels": structs.GetGraphQLStrings(&policy.Spec.Labels),
@@ -120,7 +120,7 @@ func (r *policyRepository) Update(ctx context.Context, policy *v1beta1.Policy) (
 	var updateMutation policyUpdateMutation
 	updateVars := map[string]any{
 		"id":     graphql.ID(policy.Status.Id),
-		"name":   graphql.String(policy.Spec.Name),
+		"name":   graphql.String(policy.Name()),
 		"body":   graphql.String(policy.Spec.Body),
 		"labels": structs.GetGraphQLStrings(&policy.Spec.Labels),
 		"space":  (*graphql.ID)(nil),

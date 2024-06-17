@@ -23,7 +23,6 @@ var DefaultValidContext = v1beta1.Context{
 		Namespace: "default",
 	},
 	Spec: v1beta1.ContextSpec{
-		Name:    "test-context",
 		SpaceId: utils.AddressOf("test-space-id"),
 	},
 }
@@ -44,7 +43,7 @@ func (s *WithContextSuiteHelper) CreateTestContext() (*v1beta1.Context, error) {
 func (s *WithContextSuiteHelper) WaitUntilContextExists(context *v1beta1.Context) bool {
 	return s.Eventually(func() bool {
 		st := &v1beta1.Context{}
-		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: context.Namespace, Name: context.Name}, st)
+		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: context.Namespace, Name: context.ObjectMeta.Name}, st)
 		return err == nil
 	}, DefaultTimeout, DefaultInterval)
 }
@@ -58,7 +57,7 @@ func (s *WithContextSuiteHelper) DeleteContext(context *v1beta1.Context) {
 func (s *WithContextSuiteHelper) WaitUntilContextRemoved(context *v1beta1.Context) bool {
 	return s.Eventually(func() bool {
 		st := &v1beta1.Context{}
-		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: context.Namespace, Name: context.Name}, st)
+		err := s.Client().Get(s.Context(), types.NamespacedName{Namespace: context.Namespace, Name: context.ObjectMeta.Name}, st)
 		return k8sErrors.IsNotFound(err)
 	}, DefaultTimeout, DefaultInterval)
 }

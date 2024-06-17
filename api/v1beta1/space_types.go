@@ -25,9 +25,8 @@ import (
 // SpaceSpec defines the desired state of space
 type SpaceSpec struct {
 	// +kubebuilder:validation:MinLength=1
-	ParentSpace string `json:"parentSpace"`
-	// +kubebuilder:validation:MinLength=1
-	Name            string    `json:"name"`
+	ParentSpace     string    `json:"parentSpace"`
+	Name            *string   `json:"name,omitempty"`
 	Description     string    `json:"description,omitempty"`
 	InheritEntities bool      `json:"inheritEntities,omitempty"`
 	Labels          *[]string `json:"labels,omitempty"`
@@ -43,6 +42,13 @@ type Space struct {
 
 	Spec   SpaceSpec   `json:"spec,omitempty"`
 	Status SpaceStatus `json:"status,omitempty"`
+}
+
+func (s *Space) Name() string {
+	if s.Spec.Name != nil {
+		return *s.Spec.Name
+	}
+	return s.ObjectMeta.Name
 }
 
 func (s *Space) Ready() bool {
