@@ -74,8 +74,8 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, errors.Wrap(err, "unable to retrieve stack from spacelift")
 	}
 
-	if stack.Spec.Settings.SpaceName != nil {
-		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: *stack.Spec.Settings.SpaceName})
+	if stack.Spec.SpaceName != nil {
+		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: *stack.Spec.SpaceName})
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
 				logger.V(logging.Level4).Info("Unable to find space for stack")
@@ -98,7 +98,7 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			}
 		}
 
-		stack.Spec.Settings.SpaceId = &space.Status.Id
+		stack.Spec.SpaceId = &space.Status.Id
 	}
 
 	if errors.Is(err, spaceliftRepository.ErrStackNotFound) {

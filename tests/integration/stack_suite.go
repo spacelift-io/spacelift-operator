@@ -24,12 +24,10 @@ var DefaultValidStack = v1beta1.Stack{
 		Namespace: "default",
 	},
 	Spec: v1beta1.StackSpec{
-		Name: "test-stack",
-		Settings: v1beta1.StackInput{
-			Branch:     utils.AddressOf("fake-branch"),
-			Repository: "fake-repository",
-			SpaceId:    utils.AddressOf("fake-space"),
-		},
+		Name:       "test-stack",
+		Branch:     utils.AddressOf("fake-branch"),
+		Repository: "fake-repository",
+		SpaceId:    utils.AddressOf("fake-space"),
 	},
 }
 var DefaultValidStackStatus = v1beta1.StackStatus{

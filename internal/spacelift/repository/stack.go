@@ -54,8 +54,8 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 		"manageState": graphql.Boolean(true),
 	}
 
-	if stack.Spec.Settings.ManagesStateFile != nil {
-		stackCreateMutationVars["manageState"] = graphql.Boolean(*stack.Spec.Settings.ManagesStateFile)
+	if stack.Spec.ManagesStateFile != nil {
+		stackCreateMutationVars["manageState"] = graphql.Boolean(*stack.Spec.ManagesStateFile)
 	}
 
 	if err := c.Mutate(ctx, &stackCreateMutation, stackCreateMutationVars); err != nil {
@@ -64,7 +64,7 @@ func (r *stackRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*mo
 	url := c.URL("/stack/%s", stackCreateMutation.StackCreate.ID)
 
 	stack.Status.Id = stackCreateMutation.StackCreate.ID
-	if stack.Spec.Settings.AWSIntegration != nil {
+	if stack.Spec.AWSIntegration != nil {
 		if err := r.attachAWSIntegration(ctx, stack); err != nil {
 			return nil, errors.Wrap(err, "unable to attach AWS integration to stack")
 		}
@@ -93,10 +93,10 @@ func (r *stackRepository) attachAWSIntegration(ctx context.Context, stack *v1bet
 		} `graphql:"awsIntegrationAttach(id: $id, stack: $stack, read: $read, write: $write)"`
 	}
 	awsIntegrationAttachVars := map[string]any{
-		"id":    stack.Spec.Settings.AWSIntegration.Id,
+		"id":    stack.Spec.AWSIntegration.Id,
 		"stack": stack.Status.Id,
-		"read":  graphql.Boolean(stack.Spec.Settings.AWSIntegration.Read),
-		"write": graphql.Boolean(stack.Spec.Settings.AWSIntegration.Write),
+		"read":  graphql.Boolean(stack.Spec.AWSIntegration.Read),
+		"write": graphql.Boolean(stack.Spec.AWSIntegration.Write),
 	}
 	if err := c.Mutate(ctx, &awsIntegrationAttachMutation, awsIntegrationAttachVars); err != nil {
 		return err
