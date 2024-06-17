@@ -32,17 +32,19 @@ func NewContextRepository(client client.Client) *contextRepository {
 	return &contextRepository{client: client}
 }
 
+type contextCreateMutation struct {
+	ContextCreate struct {
+		Id string `graphql:"id"`
+	} `graphql:"contextCreateV2(input: $input)"`
+}
+
 func (r *contextRepository) Create(ctx context.Context, context *v1beta1.Context) (*models.Context, error) {
-	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, context.Namespace)
+	c, err := spaceliftclient.DefaultClient(ctx, r.client, context.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating context")
 	}
 
-	var createMutation struct {
-		ContextCreate struct {
-			Id string `graphql:"id"`
-		} `graphql:"contextCreateV2(input: $input)"`
-	}
+	var createMutation contextCreateMutation
 
 	contextInput, err := structs.FromContextSpec(context)
 	if err != nil {
@@ -61,17 +63,19 @@ func (r *contextRepository) Create(ctx context.Context, context *v1beta1.Context
 	}, nil
 }
 
+type contextUpdateMutation struct {
+	ContextUpdate struct {
+		Id string `graphql:"id"`
+	} `graphql:"contextUpdateV2(id: $id, input: $input, replaceConfigElements: $replaceConfigElements)"`
+}
+
 func (r *contextRepository) Update(ctx context.Context, context *v1beta1.Context) (*models.Context, error) {
-	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, context.Namespace)
+	c, err := spaceliftclient.DefaultClient(ctx, r.client, context.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating context")
 	}
 
-	var updateMutation struct {
-		ContextUpdate struct {
-			Id string `graphql:"id"`
-		} `graphql:"contextUpdateV2(id: $id, input: $input, replaceConfigElements: $replaceConfigElements)"`
-	}
+	var updateMutation contextUpdateMutation
 
 	contextInput, err := structs.FromContextSpec(context)
 	if err != nil {

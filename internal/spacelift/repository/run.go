@@ -29,17 +29,19 @@ func NewRunRepository(client client.Client) *runRepository {
 type CreateRunQuery struct {
 }
 
+type createRunMutation struct {
+	RunTrigger struct {
+		ID    string `graphql:"id"`
+		State string `graphql:"state"`
+	} `graphql:"runTrigger(stack: $stack)"`
+}
+
 func (r *runRepository) Create(ctx context.Context, stack *v1beta1.Stack) (*models.Run, error) {
-	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, stack.Namespace)
+	c, err := spaceliftclient.DefaultClient(ctx, r.client, stack.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating run")
 	}
-	var mutation struct {
-		RunTrigger struct {
-			ID    string `graphql:"id"`
-			State string `graphql:"state"`
-		} `graphql:"runTrigger(stack: $stack)"`
-	}
+	var mutation createRunMutation
 	vars := map[string]any{
 		"stack": graphql.ID(stack.Status.Id),
 	}
