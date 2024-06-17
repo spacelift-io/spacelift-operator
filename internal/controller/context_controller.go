@@ -59,6 +59,7 @@ type ContextReconciler struct {
 func (r *ContextReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	logger.Info("Reconciling Context")
 	context, err := r.ContextRepository.Get(ctx, req.NamespacedName)
 
 	// The Context is removed, this should not happen because we filter out deletion events.
