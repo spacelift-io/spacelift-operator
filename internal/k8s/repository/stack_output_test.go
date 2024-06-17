@@ -47,8 +47,8 @@ func (s *StackOutputRepositorySuite) TestUpdateOrCreateStackOutputSecret_OK_With
 			Name:      "foobar",
 		},
 		Spec: v1beta1.StackSpec{
-			Name:     "foobar",
-			Settings: v1beta1.StackInput{SpaceId: utils.AddressOf("fake-space")},
+			Name:    "foobar",
+			SpaceId: utils.AddressOf("fake-space"),
 		},
 	}
 

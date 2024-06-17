@@ -68,14 +68,14 @@ func (s *StackControllerSuite) TestStackCreation_InvalidSpec() {
 		ExpectedErr string
 	}{
 		{
-			Spec:        v1beta1.StackSpec{Settings: v1beta1.StackInput{SpaceName: utils.AddressOf("space-name")}},
+			Spec:        v1beta1.StackSpec{SpaceName: utils.AddressOf("space-name")},
 			Name:        "missing name",
 			ExpectedErr: `Stack.app.spacelift.io "invalid-stack" is invalid: spec.name: Invalid value: "": spec.name in body should be at least 1 chars long`,
 		},
 		{
-			Spec:        v1beta1.StackSpec{Name: "name", Settings: v1beta1.StackInput{}},
-			Name:        "missing name",
-			ExpectedErr: `Stack.app.spacelift.io "invalid-stack" is invalid: spec.settings: Invalid value: "object": only one of spaceName or spaceId can be set`,
+			Spec:        v1beta1.StackSpec{Name: "name"},
+			Name:        "missing space",
+			ExpectedErr: `Stack.app.spacelift.io "invalid-stack" is invalid: spec: Invalid value: "object": only one of spaceName or spaceId can be set`,
 		},
 	}
 
@@ -174,12 +174,10 @@ func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
 			Namespace: "default",
 		},
 		Spec: v1beta1.StackSpec{
-			Name: "test-stack",
-			Settings: v1beta1.StackInput{
-				Branch:     utils.AddressOf("fake-branch"),
-				Repository: "fake-repository",
-				SpaceName:  utils.AddressOf(spaceName),
-			},
+			Name:       "test-stack",
+			Branch:     utils.AddressOf("fake-branch"),
+			Repository: "fake-repository",
+			SpaceName:  utils.AddressOf(spaceName),
 		},
 	}
 
@@ -273,12 +271,10 @@ func (s *StackControllerSuite) TestStackCreationWithSpaceName_OK() {
 			Namespace: "default",
 		},
 		Spec: v1beta1.StackSpec{
-			Name: "test-stack",
-			Settings: v1beta1.StackInput{
-				Branch:     utils.AddressOf("fake-branch"),
-				Repository: "fake-repository",
-				SpaceName:  utils.AddressOf(space.Name),
-			},
+			Name:       "test-stack",
+			Branch:     utils.AddressOf("fake-branch"),
+			Repository: "fake-repository",
+			SpaceName:  utils.AddressOf(space.Name),
 		},
 	}
 
