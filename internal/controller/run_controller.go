@@ -58,6 +58,7 @@ type RunReconciler struct {
 func (r *RunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
+	logger.Info("Reconciling Run")
 	run, err := r.RunRepository.Get(ctx, req.NamespacedName)
 
 	// The Run is removed, this should not happen because we filter out deletion events.
