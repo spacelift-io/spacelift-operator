@@ -44,7 +44,7 @@ type PolicySpec struct {
 	// SpaceId is ID (slug) of the space the policy is in
 	SpaceId *string `json:"spaceId,omitempty"`
 
-	AttachedStacksNames []string `json:"attachedStacks,omitempty"`
+	AttachedStacksNames []string `json:"attachedStacksNames,omitempty"`
 	AttachedStacksIds   []string `json:"attachedStacksIds,omitempty"`
 }
 

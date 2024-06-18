@@ -76,9 +76,9 @@ func (r *ContextReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log.IntoContext(ctx, logger)
 
 	// A context should always be linked to a valid space
-	if context.Spec.Space != nil {
-		logger := logger.WithValues(logging.SpaceName, *context.Spec.Space)
-		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: context.Namespace, Name: *context.Spec.Space})
+	if context.Spec.SpaceName != nil {
+		logger := logger.WithValues(logging.SpaceName, *context.Spec.SpaceName)
+		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: context.Namespace, Name: *context.Spec.SpaceName})
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
 				logger.V(logging.Level4).Info("Unable to find space for context, will retry in 10 seconds")
@@ -107,12 +107,12 @@ func (r *ContextReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	// For all stack attachment, ensure that all stacks are ready
 	for i, attachment := range context.Spec.Attachments {
-		if attachment.Stack != nil {
-			logger := logger.WithValues(logging.StackName, *attachment.Stack)
+		if attachment.StackName != nil {
+			logger := logger.WithValues(logging.StackName, *attachment.StackName)
 			// Test if stack exists and is ready
 			stack, err := r.StackRepository.Get(ctx, types.NamespacedName{
 				Namespace: context.Namespace,
-				Name:      *attachment.Stack,
+				Name:      *attachment.StackName,
 			})
 			if err != nil {
 				if k8sErrors.IsNotFound(err) {

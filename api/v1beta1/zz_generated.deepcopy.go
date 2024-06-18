@@ -68,8 +68,8 @@ func (in *Attachment) DeepCopyInto(out *Attachment) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.Stack != nil {
-		in, out := &in.Stack, &out.Stack
+	if in.StackName != nil {
+		in, out := &in.StackName, &out.StackName
 		*out = new(string)
 		**out = **in
 	}
@@ -202,8 +202,8 @@ func (in *ContextSpec) DeepCopyInto(out *ContextSpec) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.Space != nil {
-		in, out := &in.Space, &out.Space
+	if in.SpaceName != nil {
+		in, out := &in.SpaceName, &out.SpaceName
 		*out = new(string)
 		**out = **in
 	}

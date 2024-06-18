@@ -42,16 +42,17 @@ spec:
                       type: string
                     priority:
                       type: integer
-                    stack:
+                    stackId:
                       minLength: 1
                       type: string
-                    stackId:
+                    stackName:
                       minLength: 1
                       type: string
                   type: object
                   x-kubernetes-validations:
-                  - message: only one of stack or stackId or moduleId should be set
-                    rule: has(self.stack) != has(self.stackId) != has(self.moduleId)
+                  - message: only one of stackName or stackId or moduleId should be
+                      set
+                    rule: has(self.stackName) != has(self.stackId) != has(self.moduleId)
                 type: array
               description:
                 type: string
@@ -185,16 +186,16 @@ spec:
                 type: array
               name:
                 type: string
-              space:
+              spaceId:
                 minLength: 1
                 type: string
-              spaceId:
+              spaceName:
                 minLength: 1
                 type: string
             type: object
             x-kubernetes-validations:
-            - message: only one of space or spaceId should be set
-              rule: has(self.spaceId) != has(self.space)
+            - message: only one of spaceName or spaceId should be set
+              rule: has(self.spaceId) != has(self.spaceName)
           status:
             description: ContextStatus defines the observed state of Context
             properties:
