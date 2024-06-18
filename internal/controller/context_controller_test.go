@@ -78,23 +78,23 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 	}{
 		{
 			Spec:        v1beta1.ContextSpec{},
-			Name:        "empty spec, missing space or spaceId",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec: Invalid value: "object": only one of space or spaceId should be set`,
+			Name:        "empty spec, missing spaceName or spaceId",
+			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec: Invalid value: "object": only one of spaceName or spaceId should be set`,
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space:   utils.AddressOf("foobar"),
-				SpaceId: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
+				SpaceId:   utils.AddressOf("foobar"),
 			},
-			Name:        "both space and spaceId are set",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec: Invalid value: "object": only one of space or spaceId should be set`,
+			Name:        "both spaceName and spaceId are set",
+			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec: Invalid value: "object": only one of spaceName or spaceId should be set`,
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf(""),
+				SpaceName: utils.AddressOf(""),
 			},
 			Name:        "space empty string",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.space: Invalid value: "": spec.space in body should be at least 1 chars long`,
+			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.spaceName: Invalid value: "": spec.spaceName in body should be at least 1 chars long`,
 		},
 		{
 			Spec: v1beta1.ContextSpec{
@@ -105,59 +105,59 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space:       utils.AddressOf("foobar"),
+				SpaceName:   utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{}},
 			},
 			Name:        "empty attachment",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0]: Invalid value: "object": only one of stack or stackId or moduleId should be set`,
+			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0]: Invalid value: "object": only one of stackName or stackId or moduleId should be set`,
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
-					Stack:   utils.AddressOf("foobar"),
-					StackId: utils.AddressOf("foobar"),
+					StackName: utils.AddressOf("foobar"),
+					StackId:   utils.AddressOf("foobar"),
 				}},
 			},
 			Name:        "attachment with both stack and stackId",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0]: Invalid value: "object": only one of stack or stackId or moduleId should be set`,
+			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0]: Invalid value: "object": only one of stackName or stackId or moduleId should be set`,
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
 					ModuleId: utils.AddressOf("foobar"),
 					StackId:  utils.AddressOf("foobar"),
 				}},
 			},
 			Name:        "attachment with both stackId and moduleId",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0]: Invalid value: "object": only one of stack or stackId or moduleId should be set`,
+			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0]: Invalid value: "object": only one of stackName or stackId or moduleId should be set`,
 		},
 
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
-					Stack:    utils.AddressOf("foobar"),
-					ModuleId: utils.AddressOf("foobar"),
+					StackName: utils.AddressOf("foobar"),
+					ModuleId:  utils.AddressOf("foobar"),
 				}},
 			},
 			Name:        "attachment with both stack and moduleId",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0]: Invalid value: "object": only one of stack or stackId or moduleId should be set`,
+			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0]: Invalid value: "object": only one of stackName or stackId or moduleId should be set`,
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
-					Stack: utils.AddressOf(""),
+					StackName: utils.AddressOf(""),
 				}},
 			},
-			Name:        "attachment stack empty",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0].stack: Invalid value: "": spec.attachments[0].stack in body should be at least 1 chars long`,
+			Name:        "attachment stackName empty",
+			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.attachments[0].stackName: Invalid value: "": spec.attachments[0].stackName in body should be at least 1 chars long`,
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
 					StackId: utils.AddressOf(""),
 				}},
@@ -167,7 +167,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
 					ModuleId: utils.AddressOf(""),
 				}},
@@ -177,7 +177,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				Environment: []v1beta1.Environment{
 					{
 						Id:    "",
@@ -190,7 +190,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				Environment: []v1beta1.Environment{
 					{
 						Id:              "test",
@@ -204,7 +204,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				MountedFiles: []v1beta1.MountedFile{
 					{
 						Id:    "",
@@ -217,7 +217,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Space: utils.AddressOf("foobar"),
+				SpaceName: utils.AddressOf("foobar"),
 				MountedFiles: []v1beta1.MountedFile{
 					{
 						Id:              "test",
@@ -288,7 +288,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK_SpaceNotReady() {
 			Namespace: "default",
 		},
 		Spec: v1beta1.ContextSpec{
-			Space: utils.AddressOf("test-space"),
+			SpaceName: utils.AddressOf("test-space"),
 		},
 	}
 	s.Logs.TakeAll()
@@ -361,7 +361,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK_AttachedStackNotRead
 			SpaceId: utils.AddressOf("test-space"),
 			Attachments: []v1beta1.Attachment{
 				{
-					Stack: utils.AddressOf("test-stack"),
+					StackName: utils.AddressOf("test-stack"),
 				},
 			},
 		},

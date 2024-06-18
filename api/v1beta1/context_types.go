@@ -58,25 +58,25 @@ type Hooks struct {
 	BeforePlan    []string `json:"beforePlan,omitempty"`
 }
 
-// +kubebuilder:validation:XValidation:message=only one of stack or stackId or moduleId should be set,rule=has(self.stack) != has(self.stackId) != has(self.moduleId)
+// +kubebuilder:validation:XValidation:message=only one of stackName or stackId or moduleId should be set,rule=has(self.stackName) != has(self.stackId) != has(self.moduleId)
 type Attachment struct {
 	// +kubebuilder:validation:MinLength=1
 	ModuleId *string `json:"moduleId,omitempty"`
 	// +kubebuilder:validation:MinLength=1
 	StackId *string `json:"stackId,omitempty"`
 	// +kubebuilder:validation:MinLength=1
-	Stack    *string `json:"stack,omitempty"`
-	Priority *int    `json:"priority,omitempty"`
+	StackName *string `json:"stackName,omitempty"`
+	Priority  *int    `json:"priority,omitempty"`
 }
 
 // ContextSpec defines the desired state of Context
-// +kubebuilder:validation:XValidation:message=only one of space or spaceId should be set,rule=has(self.spaceId) != has(self.space)
+// +kubebuilder:validation:XValidation:message=only one of spaceName or spaceId should be set,rule=has(self.spaceId) != has(self.spaceName)
 type ContextSpec struct {
 	Name *string `json:"name,omitempty"`
 	// +kubebuilder:validation:MinLength=1
 	SpaceId *string `json:"spaceId,omitempty"`
 	// +kubebuilder:validation:MinLength=1
-	Space       *string  `json:"space,omitempty"`
+	SpaceName   *string  `json:"spaceName,omitempty"`
 	Description *string  `json:"description,omitempty"`
 	Labels      []string `json:"labels,omitempty"`
 
