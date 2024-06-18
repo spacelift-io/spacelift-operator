@@ -78,12 +78,11 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 	}{
 		{
 			Spec:        v1beta1.ContextSpec{},
-			Name:        "empty spec, missing name and space or spaceId",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: [spec.name: Invalid value: "": spec.name in body should be at least 1 chars long, spec: Invalid value: "object": only one of space or spaceId should be set]`,
+			Name:        "empty spec, missing space or spaceId",
+			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec: Invalid value: "object": only one of space or spaceId should be set`,
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:    "foobar",
 				Space:   utils.AddressOf("foobar"),
 				SpaceId: utils.AddressOf("foobar"),
 			},
@@ -92,15 +91,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "",
-				Space: utils.AddressOf("foobar"),
-			},
-			Name:        "name empty string",
-			ExpectedErr: `Context.app.spacelift.io "invalid-context" is invalid: spec.name: Invalid value: "": spec.name in body should be at least 1 chars long`,
-		},
-		{
-			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf(""),
 			},
 			Name:        "space empty string",
@@ -108,7 +98,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:    "foobar",
 				SpaceId: utils.AddressOf(""),
 			},
 			Name:        "spaceId empty string",
@@ -116,7 +105,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:        "foobar",
 				Space:       utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{}},
 			},
@@ -125,7 +113,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
 					Stack:   utils.AddressOf("foobar"),
@@ -137,7 +124,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
 					ModuleId: utils.AddressOf("foobar"),
@@ -150,7 +136,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
 					Stack:    utils.AddressOf("foobar"),
@@ -162,7 +147,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
 					Stack: utils.AddressOf(""),
@@ -173,7 +157,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
 					StackId: utils.AddressOf(""),
@@ -184,7 +167,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				Attachments: []v1beta1.Attachment{{
 					ModuleId: utils.AddressOf(""),
@@ -195,7 +177,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				Environment: []v1beta1.Environment{
 					{
@@ -209,7 +190,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				Environment: []v1beta1.Environment{
 					{
@@ -224,7 +204,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				MountedFiles: []v1beta1.MountedFile{
 					{
@@ -238,7 +217,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_InvalidSpec() {
 		},
 		{
 			Spec: v1beta1.ContextSpec{
-				Name:  "foobar",
 				Space: utils.AddressOf("foobar"),
 				MountedFiles: []v1beta1.MountedFile{
 					{
@@ -286,7 +264,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_UnableToCreateOnSpaceli
 	s.Require().Never(func() bool {
 		context, err := s.ContextRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: context.Namespace,
-			Name:      context.Name,
+			Name:      context.ObjectMeta.Name,
 		})
 		s.Require().NoError(err)
 		return context.Status.Id != ""
@@ -310,7 +288,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK_SpaceNotReady() {
 			Namespace: "default",
 		},
 		Spec: v1beta1.ContextSpec{
-			Name:  "test-context",
 			Space: utils.AddressOf("test-space"),
 		},
 	}
@@ -362,11 +339,11 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK_SpaceNotReady() {
 
 	c, err = s.ContextRepo.Get(s.Context(), types.NamespacedName{
 		Namespace: c.Namespace,
-		Name:      c.Name,
+		Name:      c.ObjectMeta.Name,
 	})
 	s.Require().NoError(err)
 	s.Assert().Len(c.OwnerReferences, 1)
-	s.Assert().Equal(space.Name, c.OwnerReferences[0].Name)
+	s.Assert().Equal(space.ObjectMeta.Name, c.OwnerReferences[0].Name)
 	s.Assert().Equal("Space", c.OwnerReferences[0].Kind)
 }
 
@@ -381,7 +358,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK_AttachedStackNotRead
 			Namespace: "default",
 		},
 		Spec: v1beta1.ContextSpec{
-			Name:    "test-context",
 			SpaceId: utils.AddressOf("test-space"),
 			Attachments: []v1beta1.Attachment{
 				{
@@ -452,7 +428,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK_SecretNotReady() {
 			Namespace: "default",
 		},
 		Spec: v1beta1.ContextSpec{
-			Name:    "test-context",
 			SpaceId: utils.AddressOf("test-space"),
 			Environment: []v1beta1.Environment{
 				{
@@ -553,7 +528,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK() {
 			Namespace: "default",
 		},
 		Spec: v1beta1.ContextSpec{
-			Name:    "test-context",
+			Name:    utils.AddressOf("test context new name"),
 			SpaceId: utils.AddressOf("test-space"),
 		},
 	}
@@ -572,7 +547,7 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK() {
 
 	context, err = s.ContextRepo.Get(s.Context(), types.NamespacedName{
 		Namespace: context.Namespace,
-		Name:      context.Name,
+		Name:      context.ObjectMeta.Name,
 	})
 	s.Require().NoError(err)
 	s.Assert().Equal("test-context-id", context.Status.Id)
@@ -599,7 +574,7 @@ func (s *ContextControllerTestSuite) TestContextUpdate_OK() {
 
 	context, err = s.ContextRepo.Get(s.Context(), types.NamespacedName{
 		Namespace: context.Namespace,
-		Name:      context.Name,
+		Name:      context.ObjectMeta.Name,
 	})
 	s.Require().NoError(err)
 	s.Assert().Equal("test-context-id", context.Status.Id)

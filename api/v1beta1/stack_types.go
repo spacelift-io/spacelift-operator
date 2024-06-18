@@ -28,8 +28,7 @@ type StackSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	CommitSHA *string `json:"commitSHA,omitempty"`
 
-	// +kubebuilder:validation:MinLength=1
-	Name                   string          `json:"name"`
+	Name                   *string         `json:"name,omitempty"`
 	SpaceName              *string         `json:"spaceName,omitempty"`
 	SpaceId                *string         `json:"spaceId,omitempty"`
 	AdditionalProjectGlobs *[]string       `json:"additionalProjectGlobs,omitempty"`
@@ -137,6 +136,13 @@ type Stack struct {
 
 	Spec   StackSpec   `json:"spec,omitempty"`
 	Status StackStatus `json:"status,omitempty"`
+}
+
+func (s *Stack) Name() string {
+	if s.Spec.Name != nil {
+		return *s.Spec.Name
+	}
+	return s.ObjectMeta.Name
 }
 
 func (s *Stack) Ready() bool {

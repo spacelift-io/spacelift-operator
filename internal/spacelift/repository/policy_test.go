@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
@@ -26,8 +27,10 @@ func Test_policyRepository_Create(t *testing.T) {
 		{
 			name: "basic policy",
 			policy: v1beta1.Policy{
-				Spec: v1beta1.PolicySpec{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "name",
+				},
+				Spec: v1beta1.PolicySpec{
 					Body: "body",
 					Type: "PLAN",
 					Labels: []string{
@@ -45,10 +48,36 @@ func Test_policyRepository_Create(t *testing.T) {
 			},
 		},
 		{
+			name: "basic policy with name",
+			policy: v1beta1.Policy{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "name",
+				},
+				Spec: v1beta1.PolicySpec{
+					Name: utils.AddressOf("test name override"),
+					Body: "body",
+					Type: "PLAN",
+					Labels: []string{
+						"label1",
+						"label2",
+					},
+				},
+			},
+			expectedVars: map[string]any{
+				"name":   graphql.String("test name override"),
+				"body":   graphql.String("body"),
+				"type":   PolicyType("PLAN"),
+				"labels": structs.GetGraphQLStrings(&[]string{"label1", "label2"}),
+				"space":  (*graphql.ID)(nil),
+			},
+		},
+		{
 			name: "basic policy with space",
 			policy: v1beta1.Policy{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "name",
+				},
 				Spec: v1beta1.PolicySpec{
-					Name:    "name",
 					Body:    "body",
 					Type:    "PLAN",
 					SpaceId: utils.AddressOf("space-1"),
@@ -66,8 +95,10 @@ func Test_policyRepository_Create(t *testing.T) {
 		{
 			name: "policy with space to attach",
 			policy: v1beta1.Policy{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "name",
+				},
 				Spec: v1beta1.PolicySpec{
-					Name:    "name",
 					Body:    "body",
 					Type:    "PLAN",
 					SpaceId: utils.AddressOf("space-1"),
@@ -145,8 +176,10 @@ func Test_policyRepository_Create_WithAttachedStacks(t *testing.T) {
 	).Once().Return(nil)
 
 	policy := v1beta1.Policy{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "name",
+		},
 		Spec: v1beta1.PolicySpec{
-			Name:              "name",
 			Body:              "body",
 			Type:              "PLAN",
 			AttachedStacksIds: []string{"stack-id-1", "stack-id-2"},
@@ -166,8 +199,10 @@ func Test_policyRepository_Update(t *testing.T) {
 		{
 			name: "basic policy",
 			policy: v1beta1.Policy{
-				Spec: v1beta1.PolicySpec{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "name",
+				},
+				Spec: v1beta1.PolicySpec{
 					Body: "body",
 					Type: "PLAN",
 					Labels: []string{
@@ -188,10 +223,39 @@ func Test_policyRepository_Update(t *testing.T) {
 			},
 		},
 		{
+			name: "basic policy with name",
+			policy: v1beta1.Policy{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "name",
+				},
+				Spec: v1beta1.PolicySpec{
+					Name: utils.AddressOf("test name override"),
+					Body: "body",
+					Type: "PLAN",
+					Labels: []string{
+						"label1",
+						"label2",
+					},
+				},
+				Status: v1beta1.PolicyStatus{
+					Id: "policy-id",
+				},
+			},
+			expectedVars: map[string]any{
+				"id":     graphql.ID("policy-id"),
+				"name":   graphql.String("test name override"),
+				"body":   graphql.String("body"),
+				"labels": structs.GetGraphQLStrings(&[]string{"label1", "label2"}),
+				"space":  (*graphql.ID)(nil),
+			},
+		},
+		{
 			name: "basic policy with space",
 			policy: v1beta1.Policy{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "name",
+				},
 				Spec: v1beta1.PolicySpec{
-					Name:    "name",
 					Body:    "body",
 					Type:    "PLAN",
 					SpaceId: utils.AddressOf("space-1"),
@@ -212,8 +276,10 @@ func Test_policyRepository_Update(t *testing.T) {
 		{
 			name: "policy with space to attach",
 			policy: v1beta1.Policy{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "name",
+				},
 				Spec: v1beta1.PolicySpec{
-					Name:    "name",
 					Body:    "body",
 					Type:    "PLAN",
 					SpaceId: utils.AddressOf("space-1"),
@@ -313,8 +379,10 @@ func Test_policyRepository_Update_WithAttachedStacks(t *testing.T) {
 	).Once().Return(nil)
 
 	policy := v1beta1.Policy{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "name",
+		},
 		Spec: v1beta1.PolicySpec{
-			Name:              "name",
 			Body:              "body",
 			Type:              "PLAN",
 			AttachedStacksIds: []string{"stack-id-3"},
@@ -371,8 +439,10 @@ func Test_policyRepository_Update_DetachAllStacks(t *testing.T) {
 	// stack-id-2 should not be detached because it is autoattached
 
 	policy := v1beta1.Policy{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "name",
+		},
 		Spec: v1beta1.PolicySpec{
-			Name:              "name",
 			Body:              "body",
 			Type:              "PLAN",
 			AttachedStacksIds: []string{},

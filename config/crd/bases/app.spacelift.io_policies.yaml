@@ -55,7 +55,6 @@ spec:
                 type: array
               name:
                 description: Name of the policy - should be unique in one account
-                minLength: 1
                 type: string
               spaceId:
                 description: SpaceId is ID (slug) of the space the policy is in
@@ -82,7 +81,6 @@ spec:
                 type: string
             required:
             - body
-            - name
             - type
             type: object
             x-kubernetes-validations:

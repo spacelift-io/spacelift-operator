@@ -184,7 +184,6 @@ spec:
                     rule: has(self.valueFromSecret) != has(self.value)
                 type: array
               name:
-                minLength: 1
                 type: string
               space:
                 minLength: 1
@@ -192,8 +191,6 @@ spec:
               spaceId:
                 minLength: 1
                 type: string
-            required:
-            - name
             type: object
             x-kubernetes-validations:
             - message: only one of space or spaceId should be set

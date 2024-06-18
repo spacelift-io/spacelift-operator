@@ -29,7 +29,7 @@ func NewStackOutputRepository(client client.Client, scheme *runtime.Scheme, even
 }
 
 func (r *StackOutputRepository) UpdateOrCreateStackOutputSecret(ctx context.Context, stack *v1beta1.Stack, outputs []models.StackOutput) (*v1.Secret, error) {
-	secretName := "stack-output-" + stack.Name
+	secretName := "stack-output-" + stack.ObjectMeta.Name
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: stack.Namespace,

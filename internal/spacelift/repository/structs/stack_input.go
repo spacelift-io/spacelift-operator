@@ -94,7 +94,8 @@ type TerraformInput struct {
 	ExternalStateAccessEnabled *graphql.Boolean `json:"externalStateAccessEnabled"`
 }
 
-func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
+func FromStackSpec(stack *v1beta1.Stack) StackInput {
+	stackSpec := stack.Spec
 	administrative := getGraphQLBoolean(stackSpec.Administrative)
 	if administrative == nil {
 		administrative = graphql.NewBoolean(false)
@@ -120,7 +121,7 @@ func FromStackSpec(stackSpec v1beta1.StackSpec) StackInput {
 		Branch:              branch,
 		GitHubActionDeploy:  getGraphQLBoolean(stackSpec.GitHubActionDeploy),
 		LocalPreviewEnabled: getGraphQLBoolean(stackSpec.LocalPreviewEnabled),
-		Name:                graphql.String(stackSpec.Name),
+		Name:                graphql.String(stack.Name()),
 		ProtectFromDeletion: getGraphQLBoolean(stackSpec.ProtectFromDeletion),
 		Namespace:           getGraphQLString(namespace),
 		Repository:          graphql.String(repo),

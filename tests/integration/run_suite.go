@@ -40,7 +40,7 @@ func (s *WithRunSuiteHelper) CreateRun(run *v1beta1.Run) error {
 	stackName := run.Spec.StackName
 	s.FakeSpaceliftRunRepo.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(r *v1beta1.Stack) bool {
-			return r.Name == stackName
+			return r.ObjectMeta.Name == stackName
 		})).
 		Once().
 		Return(&models.Run{

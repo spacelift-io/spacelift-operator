@@ -14,9 +14,10 @@ type SpaceInput struct {
 	Labels          *[]graphql.String `json:"labels"`
 }
 
-func FromSpaceSpec(spec v1beta1.SpaceSpec) SpaceInput {
+func FromSpaceSpec(s *v1beta1.Space) SpaceInput {
+	spec := s.Spec
 	return SpaceInput{
-		Name:            graphql.String(spec.Name),
+		Name:            graphql.String(s.Name()),
 		Description:     graphql.String(spec.Description),
 		InheritEntities: graphql.Boolean(spec.InheritEntities),
 		ParentSpace:     graphql.String(spec.ParentSpace),

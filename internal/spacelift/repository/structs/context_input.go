@@ -50,9 +50,10 @@ type ContextInput struct {
 	ConfigAttachments []ConfigAttachments `json:"configAttachments"`
 }
 
-func FromContextSpec(spec v1beta1.ContextSpec) (*ContextInput, error) {
+func FromContextSpec(c *v1beta1.Context) (*ContextInput, error) {
+	spec := c.Spec
 	input := ContextInput{
-		Name:  spec.Name,
+		Name:  c.Name(),
 		Space: *spec.SpaceId,
 	}
 	if spec.Description != nil {

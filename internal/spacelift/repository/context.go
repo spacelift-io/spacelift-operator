@@ -44,7 +44,7 @@ func (r *contextRepository) Create(ctx context.Context, context *v1beta1.Context
 		} `graphql:"contextCreateV2(input: $input)"`
 	}
 
-	contextInput, err := structs.FromContextSpec(context.Spec)
+	contextInput, err := structs.FromContextSpec(context)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to build context spec")
 	}
@@ -73,7 +73,7 @@ func (r *contextRepository) Update(ctx context.Context, context *v1beta1.Context
 		} `graphql:"contextUpdateV2(id: $id, input: $input, replaceConfigElements: $replaceConfigElements)"`
 	}
 
-	contextInput, err := structs.FromContextSpec(context.Spec)
+	contextInput, err := structs.FromContextSpec(context)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to build context spec")
 	}

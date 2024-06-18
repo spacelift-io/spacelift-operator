@@ -68,13 +68,8 @@ func (s *StackControllerSuite) TestStackCreation_InvalidSpec() {
 		ExpectedErr string
 	}{
 		{
-			Spec:        v1beta1.StackSpec{SpaceName: utils.AddressOf("space-name")},
-			Name:        "missing name",
-			ExpectedErr: `Stack.app.spacelift.io "invalid-stack" is invalid: spec.name: Invalid value: "": spec.name in body should be at least 1 chars long`,
-		},
-		{
-			Spec:        v1beta1.StackSpec{Name: "name"},
-			Name:        "missing space",
+			Spec:        v1beta1.StackSpec{},
+			Name:        "missing spaceName/spaceId",
 			ExpectedErr: `Stack.app.spacelift.io "invalid-stack" is invalid: spec: Invalid value: "object": only one of spaceName or spaceId can be set`,
 		},
 	}
@@ -113,7 +108,7 @@ func (s *StackControllerSuite) TestStackCreation_UnableToCreateOnSpacelift() {
 	s.Require().Never(func() bool {
 		stack, err := s.StackRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: stack.Namespace,
-			Name:      stack.Name,
+			Name:      stack.ObjectMeta.Name,
 		})
 		s.Require().NoError(err)
 		return stack.Status.Id != ""
@@ -143,7 +138,7 @@ func (s *StackControllerSuite) TestStackCreation_OK() {
 	s.Require().Eventually(func() bool {
 		stack, err := s.StackRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: stack.Namespace,
-			Name:      stack.Name,
+			Name:      stack.ObjectMeta.Name,
 		})
 		s.Require().NoError(err)
 		return stack.Status.Id == "test-stack-generated-id"
@@ -174,7 +169,6 @@ func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
 			Namespace: "default",
 		},
 		Spec: v1beta1.StackSpec{
-			Name:       "test-stack",
 			Branch:     utils.AddressOf("fake-branch"),
 			Repository: "fake-repository",
 			SpaceName:  utils.AddressOf(spaceName),
@@ -203,11 +197,10 @@ func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
 			APIVersion: v1beta1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-space1",
+			Name:      spaceName,
 			Namespace: "default",
 		},
 		Spec: v1beta1.SpaceSpec{
-			Name:        spaceName,
 			ParentSpace: "root",
 		},
 	}
@@ -239,11 +232,11 @@ func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
 
 	stack, err = s.StackRepo.Get(s.Context(), types.NamespacedName{
 		Namespace: stack.Namespace,
-		Name:      stack.Name,
+		Name:      stack.ObjectMeta.Name,
 	})
 	s.Require().NoError(err)
 	s.Assert().Len(stack.OwnerReferences, 1)
-	s.Assert().Equal(space.Name, stack.OwnerReferences[0].Name)
+	s.Assert().Equal(space.ObjectMeta.Name, stack.OwnerReferences[0].Name)
 	s.Assert().Equal("Space", stack.OwnerReferences[0].Kind)
 }
 
@@ -271,10 +264,9 @@ func (s *StackControllerSuite) TestStackCreationWithSpaceName_OK() {
 			Namespace: "default",
 		},
 		Spec: v1beta1.StackSpec{
-			Name:       "test-stack",
 			Branch:     utils.AddressOf("fake-branch"),
 			Repository: "fake-repository",
-			SpaceName:  utils.AddressOf(space.Name),
+			SpaceName:  utils.AddressOf(space.ObjectMeta.Name),
 		},
 	}
 
@@ -286,7 +278,7 @@ func (s *StackControllerSuite) TestStackCreationWithSpaceName_OK() {
 	s.Require().Eventually(func() bool {
 		stack, err := s.StackRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: stack.Namespace,
-			Name:      stack.Name,
+			Name:      stack.ObjectMeta.Name,
 		})
 		s.Require().NoError(err)
 		return stack.Status.Id == "test-stack-generated-id"
@@ -321,7 +313,7 @@ func (s *StackControllerSuite) TestStackUpdate_UnableToUpdateOnSpacelift() {
 	s.Require().Never(func() bool {
 		stack, err := s.StackRepo.Get(s.Context(), types.NamespacedName{
 			Namespace: stack.Namespace,
-			Name:      stack.Name,
+			Name:      stack.ObjectMeta.Name,
 		})
 		s.Require().NoError(err)
 		return stack.Status.Id != ""
