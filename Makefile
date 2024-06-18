@@ -192,3 +192,14 @@ controller-manifests: manifests kustomize ## Generates the manifests required to
 	# order to build the manifests. Once it's done we need to reset the file, otherwise GoReleaser
 	# will complain about a dirty git state if trying to release.
 	git checkout -q config/manager/kustomization.yaml
+
+
+HELMIFY ?= $(LOCALBIN)/helmify
+
+.PHONY: helmify
+helmify: $(HELMIFY) ## Download helmify locally if necessary.
+$(HELMIFY): $(LOCALBIN)
+	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@latest
+
+helm: manifests kustomize helmify
+	$(KUSTOMIZE) build config/default | $(HELMIFY) -crd-dir
