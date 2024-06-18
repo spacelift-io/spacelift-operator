@@ -30,17 +30,19 @@ func NewSpaceRepository(client client.Client) *spaceRepository {
 	return &spaceRepository{client: client}
 }
 
+type spaceCreateMutation struct {
+	SpaceCreate struct {
+		ID string `graphql:"id"`
+	} `graphql:"spaceCreate(input: $input)"`
+}
+
 func (r *spaceRepository) Create(ctx context.Context, space *v1beta1.Space) (*models.Space, error) {
-	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, space.Namespace)
+	c, err := spaceliftclient.DefaultClient(ctx, r.client, space.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while creating run")
 	}
 
-	var mutation struct {
-		SpaceCreate struct {
-			ID string `graphql:"id"`
-		} `graphql:"spaceCreate(input: $input)"`
-	}
+	var mutation spaceCreateMutation
 
 	spaceCreationVars := map[string]any{"input": structs.FromSpaceSpec(space)}
 
@@ -54,17 +56,19 @@ func (r *spaceRepository) Create(ctx context.Context, space *v1beta1.Space) (*mo
 	}, nil
 }
 
+type spaceUpdateMutation struct {
+	SpaceUpdate struct {
+		ID string `graphql:"id"`
+	} `graphql:"spaceUpdate(space: $space, input: $input)"`
+}
+
 func (r *spaceRepository) Update(ctx context.Context, space *v1beta1.Space) (*models.Space, error) {
-	c, err := spaceliftclient.GetSpaceliftClient(ctx, r.client, space.Namespace)
+	c, err := spaceliftclient.DefaultClient(ctx, r.client, space.Namespace)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch spacelift client while updating space")
 	}
 
-	var spaceUpdateMutation struct {
-		SpaceUpdate struct {
-			ID string `graphql:"id"`
-		} `graphql:"spaceUpdate(space: $space, input: $input)"`
-	}
+	var spaceUpdateMutation spaceUpdateMutation
 
 	spaceUpdateVars := map[string]any{
 		"space": graphql.ID(space.Status.Id),
