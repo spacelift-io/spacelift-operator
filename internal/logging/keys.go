@@ -6,8 +6,9 @@ const (
 	RunId    = "run.id"
 	RunState = "run.state"
 
-	StackName = "stack.name"
-	StackId   = "stack.id"
+	StackName             = "stack.name"
+	StackId               = "stack.id"
+	StackAWSIntegrationId = "stack.aws_integration_id"
 
 	SpaceId   = "space.id"
 	SpaceName = "space.name"
