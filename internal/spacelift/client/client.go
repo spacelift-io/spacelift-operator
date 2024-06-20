@@ -21,6 +21,10 @@ import (
 // spaceliftClient is the authenticated client that can be used to interact with Spacelift
 var spaceliftClient Client
 
+// secretVersion stores the version of the secret currently in use by the client
+// This allows to recreate the spaceliftClient if the secret has been changed in the cluster
+var secretVersion string
+
 const (
 	SecretName                 = "spacelift-credentials"      //nolint:gosec
 	SpaceliftApiKeyEndpointKey = "SPACELIFT_API_KEY_ENDPOINT" //nolint:gosec
@@ -31,12 +35,7 @@ const (
 var DefaultClient = GetSpaceliftClient
 
 func GetSpaceliftClient(ctx context.Context, client k8sclient.Client, namespace string) (Client, error) {
-	if spaceliftClient != nil {
-		return spaceliftClient, nil
-	}
-
 	var secret v1.Secret
-
 	if err := client.Get(
 		ctx,
 		k8sclient.ObjectKey{
@@ -52,6 +51,11 @@ func GetSpaceliftClient(ctx context.Context, client k8sclient.Client, namespace 
 	apiKeyID := string(secret.Data[SpaceliftApiKeyIDKey])
 	apiKeySecret := string(secret.Data[SpaceliftApiKeySecretKey])
 
+	currentSecretVersion := secret.GetResourceVersion()
+	if spaceliftClient != nil && currentSecretVersion == secretVersion {
+		return spaceliftClient, nil
+	}
+
 	session, err := func() (session.Session, error) {
 		sessionCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 		defer cancel()
@@ -62,6 +66,7 @@ func GetSpaceliftClient(ctx context.Context, client k8sclient.Client, namespace 
 	}
 
 	spaceliftClient = New(http.DefaultClient, session)
+	secretVersion = currentSecretVersion
 
 	return spaceliftClient, nil
 }
