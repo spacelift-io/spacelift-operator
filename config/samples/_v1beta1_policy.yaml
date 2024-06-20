@@ -3,11 +3,10 @@ kind: Policy
 metadata:
   name: policy-sample
 spec:
-  name: test policy
   type: PLAN
   spaceName: space-sample
   description: Prevent creation of IAM users test
-  attachedStacks:
+  attachedStacksNames:
     - stack-sample
   body: |
     package spacelift
