@@ -185,7 +185,7 @@ func (s *StackControllerSuite) TestStackCreation_OK_SpaceNotReady() {
 
 	var logs *observer.ObservedLogs
 	s.Require().Eventually(func() bool {
-		logs = s.Logs.FilterMessage("Unable to find space for stack")
+		logs = s.Logs.FilterMessage("Unable to find space for stack, will retry in 10 seconds")
 		return logs.Len() == 1
 	}, integration.DefaultTimeout, integration.DefaultInterval)
 

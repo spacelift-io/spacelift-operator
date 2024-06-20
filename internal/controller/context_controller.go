@@ -81,7 +81,7 @@ func (r *ContextReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: context.Namespace, Name: *context.Spec.SpaceName})
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
-				logger.V(logging.Level4).Info("Unable to find space for context, will retry in 10 seconds")
+				logger.Info("Unable to find space for context, will retry in 10 seconds")
 				return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 			}
 			logger.Error(err, "Error fetching space for context.")
@@ -116,7 +116,7 @@ func (r *ContextReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			})
 			if err != nil {
 				if k8sErrors.IsNotFound(err) {
-					logger.V(logging.Level4).Info("Unable to find stack for context, will retry in 10 seconds")
+					logger.Info("Unable to find stack for context, will retry in 10 seconds")
 					return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 				}
 				logger.Error(err, "Error fetching stack for context.")

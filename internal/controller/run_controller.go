@@ -78,7 +78,7 @@ func (r *RunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 	stack, err := r.StackRepository.Get(ctx, types.NamespacedName{Namespace: run.Namespace, Name: run.Spec.StackName})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
-			logger.V(logging.Level4).Info("Unable to find stack for run")
+			logger.Info("Unable to find stack for run, will retry in 10 seconds")
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 		logger.Error(err, "Error fetching stack for run.")

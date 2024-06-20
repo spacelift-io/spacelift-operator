@@ -78,7 +78,7 @@ func (r *StackReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: stack.Namespace, Name: *stack.Spec.SpaceName})
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
-				logger.V(logging.Level4).Info("Unable to find space for stack")
+				logger.Info("Unable to find space for stack, will retry in 10 seconds")
 				return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 			}
 			logger.Error(err, "Error fetching space for stack")
