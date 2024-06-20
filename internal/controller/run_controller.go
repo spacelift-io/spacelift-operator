@@ -111,7 +111,6 @@ func (r *RunReconciler) handleNewRun(ctx context.Context, run *v1beta1.Run, stac
 	spaceliftRun, err := r.SpaceliftRunRepository.Create(ctx, stack)
 	if err != nil {
 		logger.Error(err, "Unable to create the run in spacelift")
-		// TODO: Implement better error handling and retry errors that could be retried
 		return ctrl.Result{}, nil
 	}
 

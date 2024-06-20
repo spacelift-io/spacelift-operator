@@ -297,33 +297,38 @@ func (s *StackControllerSuite) TestStackCreationWithSpaceName_OK() {
 }
 
 func (s *StackControllerSuite) TestStackUpdate_UnableToUpdateOnSpacelift() {
-	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
+	s.FakeSpaceliftStackRepo.EXPECT().Get(mock.Anything, mock.Anything).Times(2).
+		Return(nil, nil)
+	failedUpdate := s.FakeSpaceliftStackRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
+		Return(nil, fmt.Errorf("unable to update resource on spacelift"))
+	s.FakeSpaceliftStackRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
 		Return(&models.Stack{
 			Id: "test-stack-generated-id",
-		}, nil)
-	s.FakeSpaceliftStackRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
-		Return(nil, fmt.Errorf("unable to update resource on spacelift"))
+		}, nil).NotBefore(failedUpdate)
 
 	s.Logs.TakeAll()
 	stack, err := s.CreateTestStack()
 	s.Require().NoError(err)
 	defer s.DeleteStack(stack)
 
-	// Make sure we don't update the stack ID
-	s.Require().Never(func() bool {
-		stack, err := s.StackRepo.Get(s.Context(), types.NamespacedName{
-			Namespace: stack.Namespace,
-			Name:      stack.ObjectMeta.Name,
-		})
-		s.Require().NoError(err)
-		return stack.Status.Id != ""
-	}, 3*time.Second, integration.DefaultInterval)
+	var logs *observer.ObservedLogs
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Unable to update the stack in spacelift")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
 
-	// Check that the error has been logged
-	logs := s.Logs.FilterMessage("Unable to update the stack in spacelift")
-	s.Require().Equal(1, logs.Len())
-	logs = s.Logs.FilterMessage("Stack updated")
-	s.Require().Equal(0, logs.Len())
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Stack updated")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+	s.Assert().Equal("test-stack-generated-id", logs.All()[0].ContextMap()[logging.StackId])
+
+	stack, err = s.StackRepo.Get(s.Context(), types.NamespacedName{
+		Namespace: stack.Namespace,
+		Name:      stack.ObjectMeta.Name,
+	})
+	s.Require().NoError(err)
+	s.Assert().Equal("test-stack-generated-id", stack.Status.Id)
 }
 
 func (s *StackControllerSuite) TestStackUpdate_OK() {

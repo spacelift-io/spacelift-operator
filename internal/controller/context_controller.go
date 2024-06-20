@@ -229,8 +229,7 @@ func (r *ContextReconciler) handleUpdateContext(ctx context.Context, context *v1
 	spaceliftUpdatedContext, err := r.SpaceliftContextRepository.Update(ctx, context)
 	if err != nil {
 		logger.Error(err, "Unable to update the context in spacelift")
-		// TODO: Implement better error handling and retry errors that could be retried
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
 	context.SetContext(spaceliftUpdatedContext)

@@ -111,7 +111,7 @@ func (r *SpaceReconciler) handleUpdateSpace(ctx context.Context, space *v1beta1.
 	spaceliftUpdatedSpace, err := r.SpaceliftSpaceRepository.Update(ctx, space)
 	if err != nil {
 		logger.Error(err, "Unable to update the space in spacelift")
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
 	res, err := r.updateSpaceStatus(ctx, space, *spaceliftUpdatedSpace)
