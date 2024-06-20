@@ -2,12 +2,15 @@ package repository
 
 import (
 	"context"
+	"slices"
 
 	"github.com/pkg/errors"
 	"github.com/shurcooL/graphql"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/spacelift-io/spacelift-operator/api/v1beta1"
+	"github.com/spacelift-io/spacelift-operator/internal/logging"
 	spaceliftclient "github.com/spacelift-io/spacelift-operator/internal/spacelift/client"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/models"
 	"github.com/spacelift-io/spacelift-operator/internal/spacelift/repository/slug"
@@ -102,6 +105,7 @@ func (r *stackRepository) attachAWSIntegration(ctx context.Context, stack *v1bet
 		"read":  graphql.Boolean(stack.Spec.AWSIntegration.Read),
 		"write": graphql.Boolean(stack.Spec.AWSIntegration.Write),
 	}
+
 	if err := c.Mutate(ctx, &mutation, awsIntegrationAttachVars); err != nil {
 		return err
 	}
@@ -109,10 +113,41 @@ func (r *stackRepository) attachAWSIntegration(ctx context.Context, stack *v1bet
 	return nil
 }
 
+type awsIntegrationDetachMutation struct {
+	AWSIntegrationDetach struct {
+		ID string `graphql:"id"`
+	} `graphql:"awsIntegrationDetach(id: $id)"`
+}
+
+func (r *stackRepository) detachAWSIntegration(ctx context.Context, stack *v1beta1.Stack, id string) error {
+	c, err := spaceliftclient.DefaultClient(ctx, r.client, stack.Namespace)
+	if err != nil {
+		return errors.Wrap(err, "unable to fetch spacelift client while detaching AWS integration")
+	}
+	var mutation awsIntegrationDetachMutation
+	vars := map[string]any{
+		"id": graphql.ID(id),
+	}
+
+	if err := c.Mutate(ctx, &mutation, vars); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type stackUpdateMutationAWSIntegration struct {
+	ID            string `graphql:"id"`
+	IntegrationID string `graphql:"integrationId"`
+	Read          bool   `graphql:"read"`
+	Write         bool   `graphql:"write"`
+}
+
 type stackUpdateMutation struct {
 	StackUpdate struct {
-		ID    string `graphql:"id"`
-		State string `graphql:"state"`
+		ID                      string                              `graphql:"id"`
+		State                   string                              `graphql:"state"`
+		AttachedAWSIntegrations []stackUpdateMutationAWSIntegration `graphql:"attachedAwsIntegrations"`
 	} `graphql:"stackUpdate(id: $id, input: $input)"`
 }
 
@@ -132,6 +167,39 @@ func (r *stackRepository) Update(ctx context.Context, stack *v1beta1.Stack) (*mo
 
 	if err := c.Mutate(ctx, &mutation, vars); err != nil {
 		return nil, errors.Wrap(err, "unable to create stack")
+	}
+
+	logger := log.FromContext(ctx).WithValues(logging.StackId, mutation.StackUpdate.ID)
+
+	// First we check if there are any integrations to detach
+	// Any existing attachment that does not match spec.AWSIntegration will be detached.
+	attachedIntegrations := mutation.StackUpdate.AttachedAWSIntegrations
+	for i, integration := range attachedIntegrations {
+		if stack.Spec.AWSIntegration == nil ||
+			stack.Spec.AWSIntegration.Id != integration.IntegrationID ||
+			(stack.Spec.AWSIntegration.Id == integration.IntegrationID &&
+				(stack.Spec.AWSIntegration.Read != integration.Read ||
+					stack.Spec.AWSIntegration.Write != integration.Write)) {
+			if err := r.detachAWSIntegration(ctx, stack, integration.ID); err != nil {
+				return nil, errors.Wrap(err, "unable to detach AWS integration from stack")
+			}
+			logger.Info("Detached AWS integration from stack", logging.StackAWSIntegrationId, integration.IntegrationID)
+			// If we are detaching an integration, we also reflect this change to the mutation array.
+			// This allows an integration to be detached and reattached in a row if a read or write attribute has been changed.
+			mutation.StackUpdate.AttachedAWSIntegrations = append(mutation.StackUpdate.AttachedAWSIntegrations[:i], mutation.StackUpdate.AttachedAWSIntegrations[i+1:]...)
+		}
+	}
+
+	if stack.Spec.AWSIntegration != nil {
+		shouldAttachInteration := !slices.ContainsFunc(mutation.StackUpdate.AttachedAWSIntegrations, func(s stackUpdateMutationAWSIntegration) bool {
+			return s.IntegrationID == stack.Spec.AWSIntegration.Id
+		})
+		if shouldAttachInteration {
+			if err := r.attachAWSIntegration(ctx, stack); err != nil {
+				return nil, errors.Wrap(err, "unable to attach AWS integration to stack")
+			}
+			logger.Info("Attached AWS integration to stack", logging.StackAWSIntegrationId, stack.Spec.AWSIntegration.Id)
+		}
 	}
 
 	// TODO(michalg): URL can never change here, should we still generate it for k8s api?

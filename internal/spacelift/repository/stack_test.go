@@ -191,3 +191,151 @@ func Test_stackRepository_Update(t *testing.T) {
 	assert.Equal(t, "stack-name", actualVars["id"])
 	assert.IsType(t, structs.StackInput{}, actualVars["input"])
 }
+
+func Test_stackRepository_Update_WithAWSIntegration(t *testing.T) {
+	originalClient := spaceliftclient.DefaultClient
+	defer func() { spaceliftclient.DefaultClient = originalClient }()
+	fakeClient := mocks.NewClient(t)
+	spaceliftclient.DefaultClient = func(_ context.Context, _ client.Client, _ string) (spaceliftclient.Client, error) {
+		return fakeClient, nil
+	}
+
+	fakeStackId := "stack-id"
+	var actualVars map[string]any
+	fakeClient.EXPECT().
+		Mutate(mock.Anything, mock.AnythingOfType("*repository.stackUpdateMutation"), mock.Anything).
+		Run(func(_ context.Context, mutation any, vars map[string]interface{}, _ ...graphql.RequestOption) {
+			actualVars = vars
+			updateMutation := mutation.(*stackUpdateMutation)
+			updateMutation.StackUpdate.ID = fakeStackId
+			updateMutation.StackUpdate.AttachedAWSIntegrations = []stackUpdateMutationAWSIntegration{
+				{
+					ID:            "attachment-id",
+					IntegrationID: "another-integration-id",
+					Read:          true,
+					Write:         true,
+				},
+			}
+		}).Return(nil)
+	fakeClient.EXPECT().URL("/stack/%s", fakeStackId).Return("")
+
+	var detachVars map[string]any
+	fakeClient.EXPECT().Mutate(mock.Anything, mock.AnythingOfType("*repository.awsIntegrationDetachMutation"), mock.Anything).
+		Run(func(_ context.Context, _ any, vars map[string]any, _ ...graphql.RequestOption) {
+			detachVars = vars
+		}).
+		Return(nil)
+	var attachVars map[string]any
+	fakeClient.EXPECT().Mutate(mock.Anything, mock.AnythingOfType("*repository.awsIntegrationAttachMutation"), mock.Anything).
+		Run(func(_ context.Context, _ any, vars map[string]any, _ ...graphql.RequestOption) {
+			attachVars = vars
+		}).
+		Return(nil)
+
+	repo := NewStackRepository(nil)
+
+	fakeStack := &v1beta1.Stack{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "stack-name",
+		},
+		Spec: v1beta1.StackSpec{
+			SpaceId: utils.AddressOf("space-id"),
+			AWSIntegration: &v1beta1.AWSIntegration{
+				Id:    "integration-id",
+				Read:  true,
+				Write: true,
+			},
+		},
+		Status: v1beta1.StackStatus{
+			Id: fakeStackId,
+		},
+	}
+	_, err := repo.Update(context.Background(), fakeStack)
+	require.NoError(t, err)
+	assert.Equal(t, "stack-name", actualVars["id"])
+	assert.IsType(t, structs.StackInput{}, actualVars["input"])
+	assert.Equal(t, map[string]any{
+		"id": graphql.ID("attachment-id"),
+	}, detachVars)
+	assert.Equal(t, map[string]any{
+		"id":    "integration-id",
+		"stack": fakeStackId,
+		"read":  graphql.Boolean(true),
+		"write": graphql.Boolean(true),
+	}, attachVars)
+}
+
+func Test_stackRepository_Update_WithAWSIntegration_UpdateExistingIntegration(t *testing.T) {
+	originalClient := spaceliftclient.DefaultClient
+	defer func() { spaceliftclient.DefaultClient = originalClient }()
+	fakeClient := mocks.NewClient(t)
+	spaceliftclient.DefaultClient = func(_ context.Context, _ client.Client, _ string) (spaceliftclient.Client, error) {
+		return fakeClient, nil
+	}
+
+	fakeStackId := "stack-id"
+	var actualVars map[string]any
+	fakeClient.EXPECT().
+		Mutate(mock.Anything, mock.AnythingOfType("*repository.stackUpdateMutation"), mock.Anything).
+		Run(func(_ context.Context, mutation any, vars map[string]interface{}, _ ...graphql.RequestOption) {
+			actualVars = vars
+			updateMutation := mutation.(*stackUpdateMutation)
+			updateMutation.StackUpdate.ID = fakeStackId
+			updateMutation.StackUpdate.AttachedAWSIntegrations = []stackUpdateMutationAWSIntegration{
+				{
+					ID:            "attachment-id",
+					IntegrationID: "integration-id",
+					Read:          true,
+					Write:         true,
+				},
+			}
+		}).Return(nil)
+	fakeClient.EXPECT().URL("/stack/%s", fakeStackId).Return("")
+
+	var detachVars map[string]any
+	fakeClient.EXPECT().Mutate(mock.Anything, mock.AnythingOfType("*repository.awsIntegrationDetachMutation"), mock.Anything).
+		Run(func(_ context.Context, _ any, vars map[string]any, _ ...graphql.RequestOption) {
+			detachVars = vars
+		}).
+		Return(nil)
+	var attachVars map[string]any
+	fakeClient.EXPECT().Mutate(mock.Anything, mock.AnythingOfType("*repository.awsIntegrationAttachMutation"), mock.Anything).
+		Run(func(_ context.Context, _ any, vars map[string]any, _ ...graphql.RequestOption) {
+			attachVars = vars
+		}).
+		Return(nil)
+
+	repo := NewStackRepository(nil)
+
+	fakeStack := &v1beta1.Stack{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "stack-name",
+		},
+		Spec: v1beta1.StackSpec{
+			SpaceId: utils.AddressOf("space-id"),
+			// Because Write has been changed from true to false
+			// The integration should be detached and reattached
+			AWSIntegration: &v1beta1.AWSIntegration{
+				Id:    "integration-id",
+				Read:  true,
+				Write: false,
+			},
+		},
+		Status: v1beta1.StackStatus{
+			Id: fakeStackId,
+		},
+	}
+	_, err := repo.Update(context.Background(), fakeStack)
+	require.NoError(t, err)
+	assert.Equal(t, "stack-name", actualVars["id"])
+	assert.IsType(t, structs.StackInput{}, actualVars["input"])
+	assert.Equal(t, map[string]any{
+		"id": graphql.ID("attachment-id"),
+	}, detachVars)
+	assert.Equal(t, map[string]any{
+		"id":    "integration-id",
+		"stack": fakeStackId,
+		"read":  graphql.Boolean(true),
+		"write": graphql.Boolean(false),
+	}, attachVars)
+}
