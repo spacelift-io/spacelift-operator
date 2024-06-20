@@ -40,7 +40,7 @@ type policyCreate struct {
 	AttachedStacks []attachedStack `graphql:"attachedStacks"`
 }
 type policyCreateMutation struct {
-	PolicyCreate policyCreate `graphql:"policyCreate(name: $name, body: $body, type: $type, labels: $labels, space: $space)"`
+	PolicyCreate policyCreate `graphql:"policyCreate(name: $name, body: $body, type: $type, labels: $labels, space: $space, description: $description)"`
 }
 type policyAttach struct {
 	Id string `graphql:"id"`
@@ -60,7 +60,7 @@ type policyUpdate struct {
 	AttachedStacks []attachedStack `graphql:"attachedStacks"`
 }
 type policyUpdateMutation struct {
-	PolicyUpdate policyUpdate `graphql:"policyUpdate(id: $id, name: $name, body: $body, labels: $labels, space: $space)"`
+	PolicyUpdate policyUpdate `graphql:"policyUpdate(id: $id, name: $name, body: $body, labels: $labels, space: $space, description: $description)"`
 }
 
 func NewPolicyRepository(client client.Client) *policyRepository {
@@ -75,11 +75,16 @@ func (r *policyRepository) Create(ctx context.Context, policy *v1beta1.Policy) (
 
 	var mutation policyCreateMutation
 	creationVars := map[string]any{
-		"name":   graphql.String(policy.Name()),
-		"body":   graphql.String(policy.Spec.Body),
-		"type":   PolicyType(policy.Spec.Type),
-		"labels": structs.GetGraphQLStrings(&policy.Spec.Labels),
-		"space":  (*graphql.ID)(nil),
+		"name":        graphql.String(policy.Name()),
+		"body":        graphql.String(policy.Spec.Body),
+		"description": graphql.String(""),
+		"type":        PolicyType(policy.Spec.Type),
+		"labels":      structs.GetGraphQLStrings(&policy.Spec.Labels),
+		"space":       (*graphql.ID)(nil),
+	}
+
+	if policy.Spec.Description != nil && *policy.Spec.Description != "" {
+		creationVars["description"] = graphql.String(*policy.Spec.Description)
 	}
 
 	if policy.Spec.SpaceId != nil && *policy.Spec.SpaceId != "" {
@@ -119,11 +124,16 @@ func (r *policyRepository) Update(ctx context.Context, policy *v1beta1.Policy) (
 
 	var updateMutation policyUpdateMutation
 	updateVars := map[string]any{
-		"id":     graphql.ID(policy.Status.Id),
-		"name":   graphql.String(policy.Name()),
-		"body":   graphql.String(policy.Spec.Body),
-		"labels": structs.GetGraphQLStrings(&policy.Spec.Labels),
-		"space":  (*graphql.ID)(nil),
+		"id":          graphql.ID(policy.Status.Id),
+		"name":        graphql.String(policy.Name()),
+		"body":        graphql.String(policy.Spec.Body),
+		"description": graphql.String(""),
+		"labels":      structs.GetGraphQLStrings(&policy.Spec.Labels),
+		"space":       (*graphql.ID)(nil),
+	}
+
+	if policy.Spec.Description != nil && *policy.Spec.Description != "" {
+		updateVars["description"] = graphql.String(*policy.Spec.Description)
 	}
 
 	if policy.Spec.SpaceId != nil && *policy.Spec.SpaceId != "" {
