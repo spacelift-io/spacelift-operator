@@ -3,10 +3,9 @@ kind: Context
 metadata:
   name: context-sample
 spec:
-  name: test
-  space: space-sample
+  spaceName: space-sample
   attachments:
-    - { stack: stack-sample }
+    - { stackName: stack-sample }
   environment:
     - id: foo
       value: bar

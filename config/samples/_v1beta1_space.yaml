@@ -3,5 +3,4 @@ kind: Space
 metadata:
   name: space-sample
 spec:
-  name: my test space
   parentSpace: root

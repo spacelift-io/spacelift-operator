@@ -3,9 +3,7 @@ kind: Stack
 metadata:
   name: stack-sample
 spec:
-  name: spacelift operator stack
-  settings:
-    spaceName: space-sample
-    administrative: false
-    branch: main
-    repository: ORG/REPO_NAME
+  spaceName: space-sample
+  administrative: false
+  branch: main
+  repository: ORG/REPO_NAME
