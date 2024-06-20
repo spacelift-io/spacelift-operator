@@ -79,7 +79,7 @@ func (r *PolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		space, err := r.SpaceRepository.Get(ctx, types.NamespacedName{Namespace: policy.Namespace, Name: *policy.Spec.SpaceName})
 		if err != nil {
 			if k8sErrors.IsNotFound(err) {
-				logger.V(logging.Level4).Info("Unable to find space for policy, will retry in 10 seconds")
+				logger.Info("Unable to find space for policy, will retry in 10 seconds")
 				return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 			}
 			logger.Error(err, "Error fetching space for policy.")
@@ -109,7 +109,7 @@ func (r *PolicyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			stack, err := r.StackRepository.Get(ctx, types.NamespacedName{Namespace: policy.Namespace, Name: stackName})
 			if err != nil {
 				if k8sErrors.IsNotFound(err) {
-					logger.V(logging.Level4).Info("Unable to find attached stack for policy, will retry in 10 seconds")
+					logger.Info("Unable to find attached stack for policy, will retry in 10 seconds")
 					return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 				}
 				logger.Error(err, "Error fetching stack for policy.")

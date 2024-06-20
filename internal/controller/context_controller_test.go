@@ -302,7 +302,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK_SpaceNotReady() {
 		return logs.Len() == 1
 	}, integration.DefaultTimeout, integration.DefaultInterval)
 	s.Assert().Equal("test-space", logs.All()[0].ContextMap()[logging.SpaceName])
-	s.Assert().EqualValues(logging.Level4, -logs.All()[0].Level)
 
 	s.Logs.TakeAll()
 	space, err := s.CreateTestSpace()
@@ -378,7 +377,6 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK_AttachedStackNotRead
 		return logs.Len() == 1
 	}, integration.DefaultTimeout, integration.DefaultInterval)
 	s.Assert().Equal("test-stack", logs.All()[0].ContextMap()[logging.StackName])
-	s.Assert().EqualValues(logging.Level4, -logs.All()[0].Level)
 
 	s.Logs.TakeAll()
 	stack, err := s.CreateTestStack()

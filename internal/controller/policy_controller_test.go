@@ -162,7 +162,6 @@ func (s *PolicyControllerSuite) TestPolicyCreation_OK_AttachedStackNotReady() {
 		return logs.Len() == 1
 	}, integration.DefaultTimeout, integration.DefaultInterval)
 	s.Assert().Equal("test-stack", logs.All()[0].ContextMap()[logging.StackName])
-	s.Assert().EqualValues(logging.Level4, -logs.All()[0].Level)
 
 	stack, err := s.CreateTestStack()
 	s.Require().NoError(err)
@@ -210,7 +209,6 @@ func (s *PolicyControllerSuite) TestPolicyCreation_OK_SpaceNotReady() {
 		return logs.Len() == 1
 	}, integration.DefaultTimeout, integration.DefaultInterval)
 	s.Assert().Equal("test-space", logs.All()[0].ContextMap()[logging.SpaceName])
-	s.Assert().EqualValues(logging.Level4, -logs.All()[0].Level)
 
 	space, err := s.CreateTestSpace()
 	s.Require().NoError(err)
