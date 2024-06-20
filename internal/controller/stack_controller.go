@@ -157,8 +157,7 @@ func (r *StackReconciler) handleUpdateStack(ctx context.Context, stack *v1beta1.
 	spaceliftUpdatedStack, err := r.SpaceliftStackRepository.Update(ctx, stack)
 	if err != nil {
 		logger.Error(err, "Unable to update the stack in spacelift")
-		// TODO: Implement better error handling and retry errors that could be retried
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
 	res, err := r.updateStackStatus(ctx, stack, *spaceliftUpdatedStack)

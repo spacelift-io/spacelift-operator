@@ -150,33 +150,38 @@ func (s *SpaceControllerSuite) TestSpaceCreation_Success() {
 }
 
 func (s *SpaceControllerSuite) TestSpaceUpdate_UnableToUpdateOnSpacelift() {
-	s.FakeSpaceliftSpaceRepo.EXPECT().Get(mock.Anything, mock.Anything).Once().
+	s.FakeSpaceliftSpaceRepo.EXPECT().Get(mock.Anything, mock.Anything).Times(2).
+		Return(nil, nil)
+	failedUpdate := s.FakeSpaceliftSpaceRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
+		Return(nil, fmt.Errorf("unable to update resource on spacelift"))
+	s.FakeSpaceliftSpaceRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
 		Return(&models.Space{
 			ID: "test-space-generated-id",
-		}, nil)
-	s.FakeSpaceliftSpaceRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
-		Return(nil, fmt.Errorf("unable to update resource on spacelift"))
+		}, nil).NotBefore(failedUpdate)
 
 	s.Logs.TakeAll()
 	space, err := s.CreateTestSpace()
 	s.Require().NoError(err)
 	defer s.DeleteSpace(space)
 
-	// Make sure we don't update the space ID
-	s.Require().Never(func() bool {
-		space, err := s.SpaceRepo.Get(s.Context(), types.NamespacedName{
-			Namespace: space.Namespace,
-			Name:      space.ObjectMeta.Name,
-		})
-		s.Require().NoError(err)
-		return space.Status.Id != ""
-	}, 3*time.Second, integration.DefaultInterval)
+	var logs *observer.ObservedLogs
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Unable to update the space in spacelift")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
 
-	// Check that the error has been logged
-	logs := s.Logs.FilterMessage("Unable to update the space in spacelift")
-	s.Require().Equal(1, logs.Len())
-	logs = s.Logs.FilterMessage("Space updated")
-	s.Require().Equal(0, logs.Len())
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Space updated")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+	s.Assert().Equal("test-space-generated-id", logs.All()[0].ContextMap()[logging.SpaceId])
+
+	space, err = s.SpaceRepo.Get(s.Context(), types.NamespacedName{
+		Namespace: space.Namespace,
+		Name:      space.ObjectMeta.Name,
+	})
+	s.Require().NoError(err)
+	s.Assert().Equal("test-space-generated-id", space.Status.Id)
 }
 
 func (s *SpaceControllerSuite) TestSpaceUpdate_OK() {

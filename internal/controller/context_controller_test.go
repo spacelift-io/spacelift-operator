@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap/zaptest/observer"
@@ -539,6 +540,40 @@ func (s *ContextControllerTestSuite) TestContextCreation_OK() {
 	var logs *observer.ObservedLogs
 	s.Require().Eventually(func() bool {
 		logs = s.Logs.FilterMessage("Context created")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+	s.Assert().Equal("test-context-id", logs.All()[0].ContextMap()[logging.ContextId])
+
+	context, err = s.ContextRepo.Get(s.Context(), types.NamespacedName{
+		Namespace: context.Namespace,
+		Name:      context.ObjectMeta.Name,
+	})
+	s.Require().NoError(err)
+	s.Assert().Equal("test-context-id", context.Status.Id)
+}
+
+func (s *ContextControllerTestSuite) TestContextUpdate_UnableToCreateOnSpacelift() {
+
+	s.FakeSpaceliftContextRepo.EXPECT().Get(mock.Anything, mock.Anything).Times(2).
+		Return(nil, nil)
+	failedUpdate := s.FakeSpaceliftContextRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
+		Return(nil, errors.New("error on first update"))
+	s.FakeSpaceliftContextRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
+		Return(&models.Context{Id: "test-context-id"}, nil).NotBefore(failedUpdate)
+
+	s.Logs.TakeAll()
+	context, err := s.CreateTestContext()
+	s.Require().NoError(err)
+	defer s.DeleteContext(context)
+
+	var logs *observer.ObservedLogs
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Unable to update the context in spacelift")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Context updated")
 		return logs.Len() == 1
 	}, integration.DefaultTimeout, integration.DefaultInterval)
 	s.Assert().Equal("test-context-id", logs.All()[0].ContextMap()[logging.ContextId])

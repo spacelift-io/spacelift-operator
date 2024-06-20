@@ -158,7 +158,7 @@ func (r *PolicyReconciler) handleUpdatePolicy(ctx context.Context, policy *v1bet
 	spaceliftUpdatedPolicy, err := r.SpaceliftPolicyRepository.Update(ctx, policy)
 	if err != nil {
 		logger.Error(err, "Unable to update the policy in spacelift")
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
 	res, err := r.updatePolicyStatus(ctx, policy, *spaceliftUpdatedPolicy)

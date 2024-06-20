@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap/zaptest/observer"
@@ -257,6 +258,39 @@ func (s *PolicyControllerSuite) TestPolicyCreation_OK() {
 	var logs *observer.ObservedLogs
 	s.Require().Eventually(func() bool {
 		logs = s.Logs.FilterMessage("Policy created")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+	s.Assert().Equal("test-policy-id", logs.All()[0].ContextMap()[logging.PolicyId])
+
+	policy, err = s.PolicyRepo.Get(s.Context(), types.NamespacedName{
+		Namespace: policy.Namespace,
+		Name:      policy.ObjectMeta.Name,
+	})
+	s.Require().NoError(err)
+	s.Assert().Equal("test-policy-id", policy.Status.Id)
+}
+
+func (s *PolicyControllerSuite) TestPolicyUpdate_UnableToCreateOnSpacelift() {
+
+	s.FakeSpaceliftPolicyRepo.EXPECT().Get(mock.Anything, mock.Anything).Times(2).
+		Return(nil, nil)
+	failedUpdate := s.FakeSpaceliftPolicyRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
+		Return(nil, errors.New("error on first update"))
+	s.FakeSpaceliftPolicyRepo.EXPECT().Update(mock.Anything, mock.Anything).Once().
+		Return(&models.Policy{Id: "test-policy-id"}, nil).NotBefore(failedUpdate)
+
+	policy, err := s.CreateTestPolicy()
+	s.Require().NoError(err)
+	defer s.DeletePolicy(policy)
+
+	var logs *observer.ObservedLogs
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Unable to update the policy in spacelift")
+		return logs.Len() == 1
+	}, integration.DefaultTimeout, integration.DefaultInterval)
+
+	s.Require().Eventually(func() bool {
+		logs = s.Logs.FilterMessage("Policy updated")
 		return logs.Len() == 1
 	}, integration.DefaultTimeout, integration.DefaultInterval)
 	s.Assert().Equal("test-policy-id", logs.All()[0].ContextMap()[logging.PolicyId])
