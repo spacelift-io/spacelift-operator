@@ -26,7 +26,7 @@ func replaceEmojis(s string) string {
 	emojis := emoji.FindAll(s)
 
 	for _, i := range emojis {
-		emo := i.Match.(emoji.Emoji)
+		emo := i.Match
 		s = strings.ReplaceAll(s, emo.Value, fmt.Sprintf("-emoji-%s-", emo.Descriptor))
 	}
 

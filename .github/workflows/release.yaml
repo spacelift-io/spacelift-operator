@@ -63,7 +63,7 @@ jobs:
           IMG: ${{ env.IMAGE_SPECIFIC_VERSION }}
 
       - name: Create release
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           args: release --clean --snapshot=${{ !startsWith(github.ref, 'refs/tags/v') }}
         env:
